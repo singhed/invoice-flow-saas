@@ -1,0 +1,112 @@
+.tax-card {
+  padding: 1rem;
+}
+
+.tax-year {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #667eea;
+  margin-bottom: 1.5rem;
+}
+
+.tax-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.tax-item {
+  padding: 1rem;
+  background: #f7fafc;
+  border-radius: 8px;
+  border-left: 4px solid #cbd5e0;
+}
+
+.tax-label {
+  font-size: 0.9rem;
+  color: #718096;
+  margin-bottom: 0.5rem;
+}
+
+.tax-value {
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.tax-value.income {
+  color: #48bb78;
+}
+
+.tax-value.collected {
+  color: #4299e1;
+}
+
+.tax-value.liability {
+  color: #ed8936;
+}
+
+.tax-value.net {
+  color: #667eea;
+}
+
+.tax-breakdown {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid #e2e8f0;
+}
+
+.tax-breakdown h3 {
+  margin-bottom: 1rem;
+  color: #4a5568;
+}
+
+.breakdown-bar {
+  display: flex;
+  height: 50px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.breakdown-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 0.9rem;
+  transition: all 0.3s;
+}
+
+.breakdown-segment:hover {
+  filter: brightness(1.1);
+}
+
+.net-segment {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.tax-segment {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.tax-note {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #fef3c7;
+  border-left: 4px solid #f59e0b;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #78350f;
+}
+
+.tax-note strong {
+  color: #92400e;
+}
+
+@media (max-width: 768px) {
+  .tax-grid {
+    grid-template-columns: 1fr;
+  }
+}
