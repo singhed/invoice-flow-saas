@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Successful</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="success-container">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      </div>
+      <h1>Payment Successful!</h1>
+      <p class="success-message">Thank you for your payment. Your transaction has been completed successfully.</p>
+      <p class="info-text">A confirmation email will be sent to your registered email address.</p>
+      <a href="#" id="back-to-portal" class="button">View Invoice</a>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    
+    if (token) {
+      document.getElementById('back-to-portal').href = `/portal?token=${token}`;
+    } else {
+      document.getElementById('back-to-portal').style.display = 'none';
+    }
+  </script>
+</body>
+</html>

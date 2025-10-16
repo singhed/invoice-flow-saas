@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Portal</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="portal-header">
+      <h1>Invoice Payment Portal</h1>
+      <p class="subtitle">Secure payment processing</p>
+    </div>
+
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p>Loading invoice details...</p>
+    </div>
+
+    <div id="error" class="error-message" style="display: none;"></div>
+
+    <div id="invoice-container" style="display: none;">
+      <div class="invoice-card">
+        <div class="invoice-header">
+          <h2>Invoice Details</h2>
+          <div class="status-badge" id="status-badge"></div>
+        </div>
+
+        <div class="invoice-details">
+          <div class="detail-row">
+            <span class="detail-label">Client Name:</span>
+            <span class="detail-value" id="client-name"></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Client Email:</span>
+            <span class="detail-value" id="client-email"></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Description:</span>
+            <span class="detail-value" id="description"></span>
+          </div>
+          <div class="detail-row amount-row">
+            <span class="detail-label">Amount Due:</span>
+            <span class="detail-value amount" id="amount"></span>
+          </div>
+        </div>
+
+        <div id="payment-section" class="payment-section">
+          <h3>Select Payment Method</h3>
+          
+          <div class="payment-buttons">
+            <button id="stripe-button" class="payment-button stripe-button">
+              <svg class="payment-icon" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/>
+              </svg>
+              Pay with Stripe
+            </button>
+
+            <div id="paypal-button-container" class="paypal-container"></div>
+          </div>
+        </div>
+
+        <div id="payment-history" class="payment-history" style="display: none;">
+          <h3>Payment History</h3>
+          <div id="payment-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/portal.js"></script>
+</body>
+</html>
