@@ -1,0 +1,172 @@
+erDiagram
+    User ||--o{ Client : owns
+    User ||--o{ Project : owns
+    User ||--o{ TimeEntry : creates
+    User ||--o{ Invoice : creates
+    User ||--o{ Expense : creates
+    User ||--o{ Reminder : creates
+    User ||--o{ Integration : has
+    
+    Client ||--o{ Project : has
+    Client ||--o{ Invoice : receives
+    
+    Project ||--o{ TimeEntry : tracks
+    Project ||--o{ InvoiceLineItem : "billable for"
+    
+    Invoice ||--o{ InvoiceLineItem : contains
+    Invoice ||--o{ Payment : receives
+    Invoice ||--o{ Reminder : has
+    
+    InvoiceLineItem ||--o{ TimeEntry : includes
+    
+    ExpenseCategory ||--o{ Expense : categorizes
+
+    User {
+        string id PK
+        string email UK
+        string name
+        string passwordHash
+        enum role
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Client {
+        string id PK
+        string name
+        string email
+        string phone
+        string address
+        string city
+        string state
+        string zipCode
+        string country
+        string taxId
+        string notes
+        enum status
+        datetime createdAt
+        datetime updatedAt
+        string userId FK
+    }
+
+    Project {
+        string id PK
+        string name
+        string description
+        decimal hourlyRate
+        enum status
+        datetime startDate
+        datetime endDate
+        datetime createdAt
+        datetime updatedAt
+        string clientId FK
+        string userId FK
+    }
+
+    TimeEntry {
+        string id PK
+        string description
+        datetime startTime
+        datetime endTime
+        int duration
+        boolean isBillable
+        boolean invoiced
+        datetime createdAt
+        datetime updatedAt
+        string projectId FK
+        string userId FK
+        string invoiceLineItemId FK
+    }
+
+    Invoice {
+        string id PK
+        string invoiceNumber UK
+        datetime issueDate
+        datetime dueDate
+        enum status
+        decimal subtotal
+        decimal taxRate
+        decimal taxAmount
+        decimal total
+        string notes
+        string terms
+        datetime createdAt
+        datetime updatedAt
+        string clientId FK
+        string userId FK
+    }
+
+    InvoiceLineItem {
+        string id PK
+        string description
+        decimal quantity
+        decimal unitPrice
+        decimal amount
+        datetime createdAt
+        datetime updatedAt
+        string invoiceId FK
+        string projectId FK
+    }
+
+    Payment {
+        string id PK
+        decimal amount
+        datetime paymentDate
+        enum paymentMethod
+        string transactionId
+        string notes
+        datetime createdAt
+        datetime updatedAt
+        string invoiceId FK
+    }
+
+    ExpenseCategory {
+        string id PK
+        string name
+        string description
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Expense {
+        string id PK
+        string description
+        decimal amount
+        datetime expenseDate
+        string vendor
+        string receipt
+        boolean isBillable
+        boolean invoiced
+        string notes
+        datetime createdAt
+        datetime updatedAt
+        string categoryId FK
+        string userId FK
+    }
+
+    Reminder {
+        string id PK
+        datetime reminderDate
+        enum reminderType
+        string message
+        boolean sent
+        datetime sentAt
+        datetime createdAt
+        datetime updatedAt
+        string invoiceId FK
+        string userId FK
+    }
+
+    Integration {
+        string id PK
+        enum provider
+        string providerAccountId
+        string accessToken
+        string refreshToken
+        datetime tokenExpiresAt
+        json config
+        enum status
+        datetime createdAt
+        datetime updatedAt
+        string userId FK
+    }
