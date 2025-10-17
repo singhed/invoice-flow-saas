@@ -1,21 +1,13 @@
 {
-  "name": "reporting-analytics-dashboard",
-  "version": "1.0.0",
-  "description": "Reporting and analytics dashboard with Prisma aggregations",
+  "name": "next-go-monorepo",
   "private": true,
-  "workspaces": [
-    "backend",
-    "frontend"
-  ],
+  "packageManager": "pnpm@8.15.8",
   "scripts": {
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "npm run dev --workspace=backend",
-    "dev:frontend": "npm run dev --workspace=frontend",
-    "build": "npm run build --workspaces",
-    "build:backend": "npm run build --workspace=backend",
-    "build:frontend": "npm run build --workspace=frontend"
-  },
-  "devDependencies": {
-    "concurrently": "^8.2.2"
+    "dev": "pnpm --filter web dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:api": "pnpm --dir apps/api exec go run ./cmd/api",
+    "build": "pnpm --filter web build",
+    "build:api": "pnpm --dir apps/api exec go build ./cmd/api",
+    "lint": "pnpm --filter web lint"
   }
 }
