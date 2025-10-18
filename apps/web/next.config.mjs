@@ -7,6 +7,8 @@ const nextConfig = {
   
   // Performance optimizations
   swcMinify: true,
+  compress: true,
+  productionBrowserSourceMaps: false,
   
   // Compiler options for tree shaking
   compiler: {

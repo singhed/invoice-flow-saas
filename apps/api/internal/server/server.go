@@ -7,10 +7,12 @@ import (
     "encoding/hex"
     "encoding/json"
     "fmt"
+    "io"
     "log"
     "net/http"
     "strconv"
     "strings"
+    "sync"
     "time"
 )
 
@@ -23,6 +25,18 @@ type Config struct {
 type Server struct {
     cfg Config
     mux *http.ServeMux
+}
+
+// Pools to reduce allocations for compression buffers and writers
+var gzipWriterPool = sync.Pool{
+    New: func() any {
+        w, _ := gzip.NewWriterLevel(io.Discard, gzip.BestSpeed)
+        return w
+    },
+}
+
+var bufferPool = sync.Pool{
+    New: func() any { return new(bytes.Buffer) },
 }
 
 // New creates a server with registered routes and middleware.
@@ -68,7 +82,7 @@ func (s *Server) registerRoutes() {
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
-    if r.Method != http.MethodGet {
+    if r.Method != http.MethodGet && r.Method != http.MethodHead {
         s.writeJSON(w, r, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"}, 0)
         return
     }
@@ -79,7 +93,7 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleHello(w http.ResponseWriter, r *http.Request) {
-    if r.Method != http.MethodGet {
+    if r.Method != http.MethodGet && r.Method != http.MethodHead {
         s.writeJSON(w, r, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"}, 0)
         return
     }
@@ -101,8 +115,9 @@ func (s *Server) withCORS(handler http.HandlerFunc) http.HandlerFunc {
         }
 
         if r.Method == http.MethodOptions {
-            w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-            w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+            w.Header().Set("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS")
+            w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept")
+            w.Header().Set("Access-Control-Max-Age", "86400")
             w.WriteHeader(http.StatusNoContent)
             return
         }
@@ -128,6 +143,8 @@ func (s *Server) allowedOrigin(origin string) string {
 }
 
 func (s *Server) writeJSON(w http.ResponseWriter, r *http.Request, status int, payload any, cacheTTL time.Duration) {
+    start := time.Now()
+
     data, err := json.Marshal(payload)
     if err != nil {
         log.Printf("failed to encode JSON response: %v", err)
@@ -158,6 +175,13 @@ func (s *Server) writeJSON(w http.ResponseWriter, r *http.Request, status int, p
     w.Header().Set("Content-Type", "application/json; charset=utf-8")
     w.Header().Add("Vary", "Accept-Encoding")
 
+    // Allow frontend to read Server-Timing across origins
+    w.Header().Set("Timing-Allow-Origin", "*")
+
+    // Report encode time (ms)
+    elapsedMs := float64(time.Since(start).Microseconds()) / 1000.0
+    w.Header().Set("Server-Timing", fmt.Sprintf("app;dur=%.3f", elapsedMs))
+
     // Compression
     var acceptEncoding string
     if r != nil {
@@ -166,13 +190,16 @@ func (s *Server) writeJSON(w http.ResponseWriter, r *http.Request, status int, p
 
     // Only compress if client supports gzip and payload is big enough
     if strings.Contains(acceptEncoding, "gzip") && len(data) > 1024 {
-        var gzBuf bytes.Buffer
-        gz, _ := gzip.NewWriterLevel(&gzBuf, gzip.BestSpeed)
-        if _, err := gz.Write(data); err != nil {
-            // Fallback to plain if compression fails
+        gzBuf := bufferPool.Get().(*bytes.Buffer)
+        gzBuf.Reset()
+        defer bufferPool.Put(gzBuf)
+
+        gz := gzipWriterPool.Get().(*gzip.Writer)
+        gz.Reset(gzBuf)
+        if _, err := gz.Write(data); err == nil {
             gz.Close()
-        } else {
-            gz.Close()
+            gzipWriterPool.Put(gz)
+
             if gzBuf.Len() < len(data) {
                 w.Header().Set("Content-Encoding", "gzip")
                 w.Header().Set("Content-Length", strconv.Itoa(gzBuf.Len()))
@@ -185,6 +212,10 @@ func (s *Server) writeJSON(w http.ResponseWriter, r *http.Request, status int, p
                 }
                 return
             }
+        } else {
+            // Fallback to plain if compression fails
+            gz.Close()
+            gzipWriterPool.Put(gz)
         }
     }
 

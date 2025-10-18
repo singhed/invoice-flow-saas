@@ -14,10 +14,11 @@ export function HealthStatus({ apiUrl }: { apiUrl: string }) {
 
   useEffect(() => {
     let mounted = true;
+    const controller = new AbortController();
 
     async function run() {
       try {
-        const health = await getHealth();
+        const health = await getHealth({ signal: controller.signal, timeoutMs: 2500 });
         if (!mounted) return;
         setState({
           status: health.status === "ok" ? "connected" : "error",
@@ -36,6 +37,7 @@ export function HealthStatus({ apiUrl }: { apiUrl: string }) {
     run();
     return () => {
       mounted = false;
+      controller.abort();
     };
   }, []);
 
