@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui";
 import { getHealth, ApiClientError } from "@/lib/api";
-import { env } from "@/env.mjs";
+import { env } from "@/env";
 
 export const dynamic = "force-dynamic";
 
