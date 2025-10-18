@@ -12,8 +12,12 @@ describe("Sidebar", () => {
 
     // initial is expanded (has width class w-56)
     expect(aside.className).toMatch(/w-56/);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+
     await user.click(toggle);
+
     // collapsed (has width class w-14)
     expect(aside.className).toMatch(/w-14/);
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
   });
 });

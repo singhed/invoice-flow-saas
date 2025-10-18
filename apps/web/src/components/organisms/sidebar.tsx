@@ -16,9 +16,11 @@ export interface SidebarProps {
 
 export function Sidebar({ items }: SidebarProps) {
   const [open, setOpen] = React.useState(true);
+  const asideId = React.useId();
 
   return (
     <aside
+      id={asideId}
       className={cn(
         "group relative h-full border-r border-border bg-background transition-[width] duration-200",
         open ? "w-56" : "w-14"
@@ -27,7 +29,13 @@ export function Sidebar({ items }: SidebarProps) {
     >
       <div className="flex h-12 items-center justify-between px-2">
         <span className={cn("text-sm font-semibold", !open && "sr-only")}>Menu</span>
-        <IconButton aria-label={open ? "Collapse sidebar" : "Expand sidebar"} variant="ghost" onClick={() => setOpen((v) => !v)}>
+        <IconButton
+          aria-label={open ? "Collapse sidebar" : "Expand sidebar"}
+          aria-expanded={open}
+          aria-controls={asideId}
+          variant="ghost"
+          onClick={() => setOpen((v) => !v)}
+        >
           {open ? "⟨" : "⟩"}
         </IconButton>
       </div>
