@@ -1,7 +1,7 @@
 import { getExpenses, ApiClientError } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30; // cache page for 30s to reduce load and speed up navigation
 
 async function fetchExpenses() {
   try {

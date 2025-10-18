@@ -15,6 +15,7 @@ import type {
  * Base API client configuration
  */
 const API_BASE_URL = env.NEXT_PUBLIC_API_URL;
+const isServer = typeof window === "undefined";
 
 /**
  * Custom error class for API errors
@@ -36,14 +37,25 @@ export class ApiClientError extends Error {
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
 
+  const method = (options?.method ?? "GET").toString().toUpperCase();
+
+  const finalOptions: RequestInit = {
+    ...options,
+    method,
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(options?.headers as any),
+    },
+  };
+
+  // Enable Next.js fetch caching for server-side GET requests by default
+  if (isServer && method === "GET" && !(finalOptions as any).next && !finalOptions.cache) {
+    (finalOptions as any).next = { revalidate: 10 };
+  }
+
   try {
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options?.headers,
-      },
-    });
+    const response = await fetch(url, finalOptions as any);
 
     // Handle empty responses (e.g., 204 No Content)
     if (response.status === 204) {
@@ -54,7 +66,7 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
 
     if (!response.ok) {
       throw new ApiClientError(
-        data.detail || `API request failed with status ${response.status}`,
+        (data as any).detail || `API request failed with status ${response.status}`,
         response.status,
         data
       );
@@ -76,8 +88,26 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
 /**
  * Health check endpoint
  */
-export async function getHealth(): Promise<HealthResponse> {
-  return fetchApi<HealthResponse>("/healthz");
+export async function getHealth(opts?: { signal?: AbortSignal; timeoutMs?: number }): Promise<HealthResponse> {
+  let controller: AbortController | undefined;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+
+  if (!opts?.signal && (opts?.timeoutMs ?? 0) > 0) {
+    controller = new AbortController();
+    timeout = setTimeout(() => controller?.abort(), opts!.timeoutMs);
+  }
+
+  try {
+    return await fetchApi<HealthResponse>("/healthz", {
+      signal: opts?.signal ?? controller?.signal,
+      cache: "no-store",
+      // keepalive is best-effort in browsers; harmless on server
+      // @ts-expect-error keepalive is a valid RequestInit in browsers
+      keepalive: true,
+    });
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
 }
 
 /**
