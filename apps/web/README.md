@@ -1,17 +1,19 @@
 # Expense Management Web App
 
-A modern Next.js 14 application with TypeScript, App Router, and Tailwind CSS for expense management.
+A modern Next.js 14 application with TypeScript, App Router, Tailwind CSS, Radix UI, Framer Motion, and a comprehensive Storybook-driven UI system.
 
 ## Features
 
 - ✅ **Next.js 14** with App Router
-- ✅ **TypeScript** for type safety
-- ✅ **Tailwind CSS** for styling
+- ✅ **TypeScript** (strict) for type safety
+- ✅ **Tailwind CSS** with design tokens via CSS variables
+- ✅ **Radix Primitives** with accessible patterns
+- ✅ **class-variance-authority** + **tailwind-merge** for variants
+- ✅ **Framer Motion** with reduced-motion support
+- ✅ **Storybook 8** with Docs/Controls/A11y + dark mode
 - ✅ **ESLint** and **Prettier** for code quality
 - ✅ **Environment validation** with Zod
 - ✅ **Typed API client** for backend communication
-- ✅ **Server Components** for optimal performance
-- ✅ **Performance optimizations** (tree shaking, image optimization, dynamic imports)
 
 ## Getting Started
 
@@ -43,77 +45,66 @@ NEXT_PUBLIC_APP_NAME=Expense Management
 pnpm dev
 ```
 
-The app will be available at [http://localhost:3000](http://localhost:3000)
+The app will be available at http://localhost:3000.
 
-### Build
+### Storybook
 
 ```bash
-# Build for production
-pnpm build
+# Start Storybook
+pnpm storybook
 
-# Start production server
-pnpm start
+# Build Storybook
+pnpm build-storybook
 ```
 
-### Scripts
+Storybook showcases all UI components with variants, accessibility, and dark mode.
 
-- `pnpm dev` - Start development server
-- `pnpm build` - Build for production
-- `pnpm start` - Start production server
-- `pnpm lint` - Run ESLint
-- `pnpm format` - Format code with Prettier
-- `pnpm format:check` - Check code formatting
-- `pnpm type-check` - Run TypeScript type checking
+### Tests
+
+```bash
+# Run unit tests (Vitest + Testing Library)
+pnpm test
+
+# Watch mode
+pnpm test:watch
+```
 
 ## Project Structure
 
 ```
 apps/web/
 ├── app/                    # Next.js App Router pages
-│   ├── layout.tsx         # Root layout with navbar
-│   ├── page.tsx           # Home page with health check
+│   ├── layout.tsx         # Root layout with navbar + ThemeProvider
+│   ├── page.tsx           # Landing page (hero, stats, backend health)
 │   ├── invoices/          # Invoices route
 │   │   └── page.tsx       # Invoices list page
-│   └── globals.css        # Global styles with Tailwind
+│   └── globals.css        # Global styles + design tokens (CSS variables)
 ├── src/
-│   ├── components/        # Reusable components
-│   │   ├── ui/           # UI components (Button, Card, etc.)
-│   │   └── Navbar.tsx    # Navigation component
+│   ├── components/
+│   │   ├── atoms/         # Buttons, inputs, form controls, badges, etc.
+│   │   ├── molecules/     # Card composition, Dialog wrappers, Tabs, etc.
+│   │   ├── organisms/     # Sidebar, PageHeader, DataTable
+│   │   └── templates/     # Dashboard shell, Settings page, Auth form
 │   ├── lib/
 │   │   ├── api/          # API client
-│   │   │   ├── client.ts # Typed API client functions
-│   │   │   ├── types.ts  # API type definitions
-│   │   │   └── index.ts  # Exports
 │   │   └── utils.ts      # Utility functions
-│   └── env.mjs           # Environment validation
-├── next.config.ts         # Next.js configuration
-├── tailwind.config.ts     # Tailwind configuration
-├── postcss.config.js      # PostCSS configuration
-├── .prettierrc           # Prettier configuration
+│   ├── providers/        # ThemeProvider
+│   └── styles/           # Token exports (TS)
+├── .storybook/            # Storybook config
+├── vitest.config.ts       # Vitest config (jsdom, setup)
+├── tailwind.config.ts     # Tailwind configuration (tokens mapped to theme)
 └── tsconfig.json         # TypeScript configuration
 ```
 
-## API Client
+## Theming
 
-The app includes a fully typed API client that communicates with the Go backend:
+- Light/dark themes via class strategy with system preference sync.
+- CSS variables defined in `app/globals.css` map to Tailwind theme tokens.
+- Use semantic Tailwind classes (e.g., `bg-background`, `text-foreground`, `ring`) across components.
 
-```typescript
-import { getExpenses, getHealth } from "@/lib/api";
+## UI Kit
 
-// Check backend health
-const health = await getHealth();
-
-// Fetch expenses
-const expenses = await getExpenses({ limit: 100 });
-```
-
-## Performance Features
-
-- **Tree Shaking**: Automatic dead code elimination
-- **Image Optimization**: Next.js Image component with AVIF/WebP support
-- **Server Components**: Default to server components for better performance
-- **Dynamic Imports**: Code splitting for optimal bundle sizes
-- **SWC Minification**: Fast and efficient code minification
+Navigate to `/ui-kit` in the running app to preview the UI system live, including dialogs, tabs, tooltips, badges, inputs, pagination, and toasts.
 
 ## Backend Integration
 
@@ -121,13 +112,13 @@ The app connects to a Go backend API. Make sure the backend is running at the UR
 
 Health check endpoint: `GET /healthz`
 
-## Development Guidelines
+## Contribution Notes
 
-- Use server components by default for optimal performance
-- Use client components (`"use client"`) only when needed (for interactivity)
-- Follow the existing component patterns in `src/components/ui/`
-- Use the typed API client from `@/lib/api` for all backend requests
-- Format code with Prettier before committing
+- Prefer server components when possible; mark interactivity with `"use client"`.
+- Follow the atomic design structure and component patterns.
+- Keep accessibility (WCAG 2.1 AA) top-of-mind: labels, roles, keyboard navigation, focus-visible rings.
+- Respect reduced-motion preferences for any animations.
+- Run `pnpm lint` and `pnpm test` before committing.
 
 ## License
 
