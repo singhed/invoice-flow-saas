@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Navbar } from "@/components/Navbar";
-import { env } from "@/env.mjs";
+import { env } from "@/env";
 import "./globals.css";
 
 export const metadata: Metadata = {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { env } from "@/env.mjs";
+import { env } from "@/env";
 
 export function Navbar() {
   const appName = env.NEXT_PUBLIC_APP_NAME;
