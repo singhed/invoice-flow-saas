@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: invoice-saas
+data:
+  s3-bucket-name: "invoice-saas-prod-invoices"
+  sqs-invoice-queue-url: "https://sqs.us-east-1.amazonaws.com/ACCOUNT_ID/invoice-saas-prod-invoice-processing-queue"
+  sqs-payment-queue-url: "https://sqs.us-east-1.amazonaws.com/ACCOUNT_ID/invoice-saas-prod-payment-notification-queue"
+  sqs-email-queue-url: "https://sqs.us-east-1.amazonaws.com/ACCOUNT_ID/invoice-saas-prod-email-queue"
+  aws-region: "us-east-1"

@@ -1,13 +1,36 @@
 {
-  "name": "next-go-monorepo",
+  "name": "invoice-saas-monorepo",
+  "version": "1.0.0",
   "private": true,
   "packageManager": "pnpm@8.15.8",
+  "workspaces": [
+    "services/*",
+    "frontend",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "pnpm --filter web dev",
-    "dev:web": "pnpm --filter web dev",
-    "dev:api": "pnpm --dir apps/api exec go run ./cmd/api",
-    "build": "pnpm --filter web build",
-    "build:api": "pnpm --dir apps/api exec go build ./cmd/api",
-    "lint": "pnpm --filter web lint"
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "test:unit": "pnpm -r test:unit",
+    "test:integration": "pnpm -r test:integration",
+    "test:e2e": "pnpm -r test:e2e",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "typecheck": "pnpm -r typecheck",
+    "docker:build": "pnpm -r docker:build",
+    "k8s:apply": "kubectl apply -k infrastructure/kubernetes/overlays/prod",
+    "terraform:init": "cd infrastructure/terraform && terraform init",
+    "terraform:plan": "cd infrastructure/terraform && terraform plan",
+    "terraform:apply": "cd infrastructure/terraform && terraform apply",
+    "test:all": "bash scripts/test-runner.sh"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "eslint": "^8.54.0",
+    "prettier": "^3.1.0",
+    "typescript": "^5.3.2"
   }
 }
