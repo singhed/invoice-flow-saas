@@ -2,9 +2,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui";
 import { env } from "@/env";
 import { ThemeToggle } from "./theme-toggle";
+import { createTranslator } from "@/i18n";
+import { getCurrentLocale } from "@/i18n/server";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export function Navbar() {
   const appName = env.NEXT_PUBLIC_APP_NAME;
+  const locale = getCurrentLocale();
+  const t = createTranslator(locale);
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border/40 bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -20,20 +25,20 @@ export function Navbar() {
                 {appName}
               </span>
               <span className="ml-2 hidden rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary ring-1 ring-primary/20 sm:inline">
-                Beta
+                {t("navbar.beta")}
               </span>
             </Link>
           </div>
 
           <div className="flex items-center gap-6">
             <Link href="/" className="text-sm text-muted-foreground transition-colors hover:text-primary">
-              Home
+              {t("navbar.home")}
             </Link>
             <Link
               href="/invoices"
               className="text-sm text-muted-foreground transition-colors hover:text-primary"
             >
-              Invoices
+              {t("navbar.invoices")}
             </Link>
             <a
               className="hidden text-sm text-muted-foreground transition-colors hover:text-primary md:inline"
@@ -41,13 +46,14 @@ export function Navbar() {
               target="_blank"
               rel="noreferrer noopener"
             >
-              Docs
+              {t("navbar.docs")}
             </a>
             <div className="hidden md:block">
               <Link href="/invoices" className="inline-flex">
-                <Button size="sm" variant="primary">Get Started</Button>
+                <Button size="sm" variant="primary">{t("navbar.get_started")}</Button>
               </Link>
             </div>
+            <LanguageSwitcher />
             <ThemeToggle />
           </div>
         </div>
