@@ -12,6 +12,9 @@ COPY services/api-gateway ./services/api-gateway
 RUN npm install -g pnpm@8.15.8
 RUN pnpm install --no-frozen-lockfile
 
+# Build shared workspace to generate type declarations
+RUN pnpm --filter "@invoice-saas/shared" build
+
 WORKDIR /app/services/api-gateway
 RUN pnpm build
 

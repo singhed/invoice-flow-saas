@@ -290,13 +290,24 @@ jobs:
           kubectl get services -n invoice-saas
 
   e2e-tests-pr:
-    name: E2E Checks (PR)
+    name: End-to-End Tests (PR)
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
-      - name: Verify E2E job runs on PR
-        run: echo "E2E checks placeholder on PR"
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8.15.8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Run E2E smoke tests
+        env:
+          API_URL: ${{ secrets.API_GATEWAY_URL }}
+        run: pnpm run test:e2e
 
   e2e-tests:
     name: End-to-End Tests

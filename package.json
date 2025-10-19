@@ -14,7 +14,7 @@
     "test": "pnpm -r test",
     "test:unit": "pnpm -r test:unit",
     "test:integration": "pnpm -r test:integration",
-    "test:e2e": "pnpm -r test:e2e",
+    "test:e2e": "node scripts/e2e-smoke.js",
     "lint": "pnpm -r lint",
     "lint:fix": "pnpm -r lint:fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
