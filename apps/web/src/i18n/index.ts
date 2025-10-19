@@ -2,10 +2,15 @@ import { DICTIONARIES, DEFAULT_LOCALE, SUPPORTED_LOCALES, getMessage, format, ty
 
 export type { Locale, Messages };
 
+function languageLabel(code: Locale): string {
+  const label = (DICTIONARIES[code] as any)?.language?.[code];
+  return typeof label === "string" ? label : code;
+}
+
 export const LANGUAGES: Array<{ code: Locale; label: string }> = [
-  { code: "en", label: DICTIONARIES.en.language.en as string },
-  { code: "es", label: DICTIONARIES.es.language.es as string },
-  { code: "zh", label: DICTIONARIES.zh.language.zh as string },
+  { code: "en", label: languageLabel("en") },
+  { code: "es", label: languageLabel("es") },
+  { code: "zh", label: languageLabel("zh") },
 ];
 
 export function createTranslator(locale: Locale) {
