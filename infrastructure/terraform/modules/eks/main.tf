@@ -20,24 +20,24 @@ resource "aws_iam_role" "cluster" {
 
 resource "aws_iam_role_policy_attachment" "cluster_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-  role       = aws_iam_role.cluster.name
+  role = aws_iam_role.cluster.name
 }
 
 resource "aws_iam_role_policy_attachment" "cluster_vpc_resource_controller" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
-  role       = aws_iam_role.cluster.name
+  role = aws_iam_role.cluster.name
 }
 
 # EKS Cluster Security Group
 resource "aws_security_group" "cluster" {
-  name        = "${var.project_name}-${var.environment}-eks-cluster-sg"
+  name = "${var.project_name}-${var.environment}-eks-cluster-sg"
   description = "Security group for EKS cluster"
-  vpc_id      = var.vpc_id
+  vpc_id = var.vpc_id
 
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -48,15 +48,15 @@ resource "aws_security_group" "cluster" {
 
 # EKS Cluster
 resource "aws_eks_cluster" "main" {
-  name     = "${var.project_name}-${var.environment}"
+  name = "${var.project_name}-${var.environment}"
   role_arn = aws_iam_role.cluster.arn
-  version  = var.cluster_version
+  version = var.cluster_version
 
   vpc_config {
-    subnet_ids              = var.private_subnet_ids
+    subnet_ids = var.private_subnet_ids
     endpoint_private_access = true
-    endpoint_public_access  = true
-    security_group_ids      = [aws_security_group.cluster.id]
+    endpoint_public_access = true
+    security_group_ids = [aws_security_group.cluster.id]
   }
 
   enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
@@ -91,17 +91,17 @@ resource "aws_iam_role" "node_group" {
 
 resource "aws_iam_role_policy_attachment" "node_group_worker_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-  role       = aws_iam_role.node_group.name
+  role = aws_iam_role.node_group.name
 }
 
 resource "aws_iam_role_policy_attachment" "node_group_cni_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-  role       = aws_iam_role.node_group.name
+  role = aws_iam_role.node_group.name
 }
 
 resource "aws_iam_role_policy_attachment" "node_group_registry_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  role       = aws_iam_role.node_group.name
+  role = aws_iam_role.node_group.name
 }
 
 # Additional policies for node group
@@ -129,52 +129,52 @@ resource "aws_iam_role_policy" "node_group_additional" {
 
 # Node Security Group
 resource "aws_security_group" "node_group" {
-  name        = "${var.project_name}-${var.environment}-eks-node-sg"
+  name = "${var.project_name}-${var.environment}-eks-node-sg"
   description = "Security group for EKS node group"
-  vpc_id      = var.vpc_id
+  vpc_id = var.vpc_id
 
   ingress {
-    description     = "Allow nodes to communicate with each other"
-    from_port       = 0
-    to_port         = 65535
-    protocol        = "-1"
-    self            = true
+    description = "Allow nodes to communicate with each other"
+    from_port = 0
+    to_port = 65535
+    protocol = "-1"
+    self = true
   }
 
   ingress {
-    description     = "Allow pods to communicate with the cluster API Server"
-    from_port       = 443
-    to_port         = 443
-    protocol        = "tcp"
+    description = "Allow pods to communicate with the cluster API Server"
+    from_port = 443
+    to_port = 443
+    protocol = "tcp"
     security_groups = [aws_security_group.cluster.id]
   }
 
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   tags = {
-    Name                                                    = "${var.project_name}-${var.environment}-eks-node-sg"
+    Name = "${var.project_name}-${var.environment}-eks-node-sg"
     "kubernetes.io/cluster/${var.project_name}-${var.environment}" = "owned"
   }
 }
 
 # EKS Node Group
 resource "aws_eks_node_group" "main" {
-  cluster_name    = aws_eks_cluster.main.name
+  cluster_name = aws_eks_cluster.main.name
   node_group_name = "${var.project_name}-${var.environment}-node-group"
-  node_role_arn   = aws_iam_role.node_group.arn
-  subnet_ids      = var.private_subnet_ids
+  node_role_arn = aws_iam_role.node_group.arn
+  subnet_ids = var.private_subnet_ids
 
   instance_types = [var.node_instance_type]
 
   scaling_config {
     desired_size = var.node_desired_size
-    max_size     = var.node_max_size
-    min_size     = var.node_min_size
+    max_size = var.node_max_size
+    min_size = var.node_min_size
   }
 
   update_config {
@@ -198,9 +198,9 @@ data "tls_certificate" "cluster" {
 }
 
 resource "aws_iam_openid_connect_provider" "cluster" {
-  client_id_list  = ["sts.amazonaws.com"]
+  client_id_list = ["sts.amazonaws.com"]
   thumbprint_list = [data.tls_certificate.cluster.certificates[0].sha1_fingerprint]
-  url             = aws_eks_cluster.main.identity[0].oidc[0].issuer
+  url = aws_eks_cluster.main.identity[0].oidc[0].issuer
 
   tags = {
     Name = "${var.project_name}-${var.environment}-eks-oidc"
@@ -233,14 +233,14 @@ resource "aws_iam_role" "ebs_csi_driver" {
 
 resource "aws_iam_role_policy_attachment" "ebs_csi_driver" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
-  role       = aws_iam_role.ebs_csi_driver.name
+  role = aws_iam_role.ebs_csi_driver.name
 }
 
 # EBS CSI Driver Addon
 resource "aws_eks_addon" "ebs_csi_driver" {
-  cluster_name             = aws_eks_cluster.main.name
-  addon_name               = "aws-ebs-csi-driver"
-  addon_version            = "v1.25.0-eksbuild.1"
+  cluster_name = aws_eks_cluster.main.name
+  addon_name = "aws-ebs-csi-driver"
+  addon_version = "v1.25.0-eksbuild.1"
   service_account_role_arn = aws_iam_role.ebs_csi_driver.arn
 
   depends_on = [
@@ -274,7 +274,7 @@ resource "aws_iam_role" "aws_load_balancer_controller" {
 
 # AWS Load Balancer Controller IAM Policy
 resource "aws_iam_policy" "aws_load_balancer_controller" {
-  name        = "${var.project_name}-${var.environment}-aws-lb-controller"
+  name = "${var.project_name}-${var.environment}-aws-lb-controller"
   description = "IAM policy for AWS Load Balancer Controller"
 
   policy = jsonencode({
@@ -383,7 +383,7 @@ resource "aws_iam_policy" "aws_load_balancer_controller" {
         Resource = "arn:aws:ec2:*:*:security-group/*"
         Condition = {
           Null = {
-            "aws:RequestTag/elbv2.k8s.aws/cluster"  = "true"
+            "aws:RequestTag/elbv2.k8s.aws/cluster" = "true"
             "aws:ResourceTag/elbv2.k8s.aws/cluster" = "false"
           }
         }
@@ -447,7 +447,7 @@ resource "aws_iam_policy" "aws_load_balancer_controller" {
         ]
         Condition = {
           Null = {
-            "aws:RequestTag/elbv2.k8s.aws/cluster"  = "true"
+            "aws:RequestTag/elbv2.k8s.aws/cluster" = "true"
             "aws:ResourceTag/elbv2.k8s.aws/cluster" = "false"
           }
         }
@@ -509,7 +509,7 @@ resource "aws_iam_policy" "aws_load_balancer_controller" {
 
 resource "aws_iam_role_policy_attachment" "aws_load_balancer_controller" {
   policy_arn = aws_iam_policy.aws_load_balancer_controller.arn
-  role       = aws_iam_role.aws_load_balancer_controller.name
+  role = aws_iam_role.aws_load_balancer_controller.name
 }
 
 # Cluster Autoscaler IAM Role

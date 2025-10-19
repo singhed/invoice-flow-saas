@@ -124,7 +124,10 @@ jobs:
         with:
           terraform_version: 1.6.0
       
-      - name: Terraform fmt
+      - name: Terraform fmt (write)
+        run: terraform fmt -recursive
+      
+      - name: Terraform fmt check
         run: terraform fmt -check -recursive
       
       - name: Terraform init
@@ -142,27 +145,35 @@ jobs:
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
       
-      - name: Validate Kubernetes manifests
-        run: kubectl apply --dry-run=client -k infrastructure/kubernetes/base
+      - name: Validate Kubernetes manifests (render only)
+        run: kubectl kustomize infrastructure/kubernetes/base > /dev/null
 
   build-and-push:
     name: Build and Push Docker Images
     runs-on: ubuntu-latest
     needs: [lint-and-typecheck, unit-tests, integration-tests]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     strategy:
       matrix:
         service:
           - api-gateway
-          - invoice-service
-          - payment-service
+          - analytics-service
+          - auth-service
           - notification-service
+          - search-service
+          - storage-service
           - user-service
-          - worker-service
     steps:
       - uses: actions/checkout@v4
       
+      - name: Build image (PR)
+        if: github.event_name == 'pull_request'
+        working-directory: .
+        run: |
+          docker build -f services/${{ matrix.service }}/Dockerfile -t $ECR_REPOSITORY_PREFIX-${{ matrix.service }}:pr .
+      
       - name: Configure AWS credentials
+        if: github.event_name != 'pull_request'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -170,17 +181,19 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
       
       - name: Login to Amazon ECR
+        if: github.event_name != 'pull_request'
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
       
       - name: Build, tag, and push image
+        if: github.event_name != 'pull_request'
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
-        working-directory: services/${{ matrix.service }}
+        working-directory: .
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_PREFIX-${{ matrix.service }}:$IMAGE_TAG .
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_PREFIX-${{ matrix.service }}:latest .
+          docker build -f services/${{ matrix.service }}/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY_PREFIX-${{ matrix.service }}:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY_PREFIX-${{ matrix.service }}:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY_PREFIX-${{ matrix.service }}:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_PREFIX-${{ matrix.service }}:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_PREFIX-${{ matrix.service }}:latest
 
@@ -188,43 +201,64 @@ jobs:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
     needs: [terraform-validate]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     defaults:
       run:
         working-directory: infrastructure/terraform
     steps:
       - uses: actions/checkout@v4
       
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+      
       - name: Configure AWS credentials
+        if: github.event_name != 'pull_request'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
       
-      - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.6.0
+      - name: Terraform init (PR)
+        if: github.event_name == 'pull_request'
+        run: terraform init -backend=false
+      
+      - name: Terraform validate (PR)
+        if: github.event_name == 'pull_request'
+        run: terraform validate
       
       - name: Terraform init
+        if: github.event_name != 'pull_request'
         run: terraform init
       
       - name: Terraform plan
+        if: github.event_name != 'pull_request'
         run: terraform plan -out=tfplan
       
       - name: Terraform apply
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: terraform apply -auto-approve tfplan
 
   deploy-to-eks:
     name: Deploy to EKS
     runs-on: ubuntu-latest
     needs: [build-and-push, deploy-infrastructure]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     steps:
       - uses: actions/checkout@v4
       
+      - name: Install kubectl
+        if: github.event_name == 'pull_request'
+        uses: azure/setup-kubectl@v3
+      
+      - name: Validate kustomize render (PR)
+        if: github.event_name == 'pull_request'
+        run: |
+          kubectl kustomize infrastructure/kubernetes/base > /dev/null
+      
       - name: Configure AWS credentials
+        if: github.event_name != 'pull_request'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -232,23 +266,64 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
       
       - name: Update kubeconfig
+        if: github.event_name != 'pull_request'
         run: aws eks update-kubeconfig --name invoice-saas-prod --region ${{ env.AWS_REGION }}
       
       - name: Install kubectl
+        if: github.event_name != 'pull_request'
         uses: azure/setup-kubectl@v3
       
       - name: Deploy to Kubernetes
+        if: github.event_name != 'pull_request'
         run: kubectl apply -k infrastructure/kubernetes/overlays/prod
       
       - name: Wait for rollout
+        if: github.event_name != 'pull_request'
         run: |
           kubectl rollout status deployment/api-gateway -n invoice-saas --timeout=300s
           kubectl rollout status deployment/invoice-service -n invoice-saas --timeout=300s
       
       - name: Verify deployment
+        if: github.event_name != 'pull_request'
         run: |
           kubectl get pods -n invoice-saas
           kubectl get services -n invoice-saas
+
+  e2e-tests-pr:
+    name: End-to-End Tests (PR)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build API Gateway image
+        run: |
+          docker build -f services/api-gateway/Dockerfile -t api-gateway:pr .
+      - name: Start API Gateway container
+        run: |
+          docker run -d --rm -p 3000:3000 --name api-gateway api-gateway:pr
+      - name: Wait for API readiness
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://localhost:3000/health > /dev/null; then echo "API is ready"; exit 0; fi
+            sleep 2
+          done
+          echo "API did not become ready"; docker logs api-gateway || true; exit 1
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8.15.8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Run E2E smoke tests (PR)
+        env:
+          API_URL: ${{ secrets.API_GATEWAY_URL }}
+        run: pnpm run test:e2e
+      - name: Stop API Gateway container
+        if: always()
+        run: docker rm -f api-gateway || true
 
   e2e-tests:
     name: End-to-End Tests
@@ -279,10 +354,15 @@ jobs:
     name: Deploy Frontend to Render
     runs-on: ubuntu-latest
     needs: [lint-and-typecheck, unit-tests]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     steps:
       - uses: actions/checkout@v4
       
       - name: Trigger Render deployment
+        if: github.event_name != 'pull_request'
         run: |
           curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+      
+      - name: Skip Render deploy on PR
+        if: github.event_name == 'pull_request'
+        run: echo "Skipping Render deployment on pull_request"

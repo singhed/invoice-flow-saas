@@ -1,6 +1,6 @@
 # Invoice Processing Queue
 resource "aws_sqs_queue" "invoice_processing_dlq" {
-  name                      = "${var.project_name}-${var.environment}-invoice-processing-dlq"
+  name = "${var.project_name}-${var.environment}-invoice-processing-dlq"
   message_retention_seconds = 1209600 # 14 days
 
   tags = {
@@ -9,16 +9,16 @@ resource "aws_sqs_queue" "invoice_processing_dlq" {
 }
 
 resource "aws_sqs_queue" "invoice_processing" {
-  name                      = "${var.project_name}-${var.environment}-invoice-processing-queue"
-  delay_seconds             = 0
-  max_message_size          = 262144
+  name = "${var.project_name}-${var.environment}-invoice-processing-queue"
+  delay_seconds = 0
+  max_message_size = 262144
   message_retention_seconds = 345600 # 4 days
   receive_wait_time_seconds = 10
   visibility_timeout_seconds = 300
 
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.invoice_processing_dlq.arn
-    maxReceiveCount     = 3
+    maxReceiveCount = 3
   })
 
   tags = {
@@ -28,7 +28,7 @@ resource "aws_sqs_queue" "invoice_processing" {
 
 # Payment Notification Queue
 resource "aws_sqs_queue" "payment_notification_dlq" {
-  name                      = "${var.project_name}-${var.environment}-payment-notification-dlq"
+  name = "${var.project_name}-${var.environment}-payment-notification-dlq"
   message_retention_seconds = 1209600 # 14 days
 
   tags = {
@@ -37,16 +37,16 @@ resource "aws_sqs_queue" "payment_notification_dlq" {
 }
 
 resource "aws_sqs_queue" "payment_notification" {
-  name                      = "${var.project_name}-${var.environment}-payment-notification-queue"
-  delay_seconds             = 0
-  max_message_size          = 262144
+  name = "${var.project_name}-${var.environment}-payment-notification-queue"
+  delay_seconds = 0
+  max_message_size = 262144
   message_retention_seconds = 345600 # 4 days
   receive_wait_time_seconds = 10
   visibility_timeout_seconds = 300
 
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.payment_notification_dlq.arn
-    maxReceiveCount     = 3
+    maxReceiveCount = 3
   })
 
   tags = {
@@ -56,7 +56,7 @@ resource "aws_sqs_queue" "payment_notification" {
 
 # Email Queue
 resource "aws_sqs_queue" "email_dlq" {
-  name                      = "${var.project_name}-${var.environment}-email-dlq"
+  name = "${var.project_name}-${var.environment}-email-dlq"
   message_retention_seconds = 1209600 # 14 days
 
   tags = {
@@ -65,16 +65,16 @@ resource "aws_sqs_queue" "email_dlq" {
 }
 
 resource "aws_sqs_queue" "email" {
-  name                      = "${var.project_name}-${var.environment}-email-queue"
-  delay_seconds             = 0
-  max_message_size          = 262144
+  name = "${var.project_name}-${var.environment}-email-queue"
+  delay_seconds = 0
+  max_message_size = 262144
   message_retention_seconds = 345600 # 4 days
   receive_wait_time_seconds = 10
   visibility_timeout_seconds = 300
 
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.email_dlq.arn
-    maxReceiveCount     = 3
+    maxReceiveCount = 3
   })
 
   tags = {
@@ -102,14 +102,14 @@ resource "aws_sns_topic" "invoice_events" {
 # SNS to SQS subscriptions
 resource "aws_sns_topic_subscription" "payment_to_notification_queue" {
   topic_arn = aws_sns_topic.payment_events.arn
-  protocol  = "sqs"
-  endpoint  = aws_sqs_queue.payment_notification.arn
+  protocol = "sqs"
+  endpoint = aws_sqs_queue.payment_notification.arn
 }
 
 resource "aws_sns_topic_subscription" "invoice_to_email_queue" {
   topic_arn = aws_sns_topic.invoice_events.arn
-  protocol  = "sqs"
-  endpoint  = aws_sqs_queue.email.arn
+  protocol = "sqs"
+  endpoint = aws_sqs_queue.email.arn
 }
 
 # SQS Queue Policies to allow SNS to send messages
@@ -122,7 +122,7 @@ resource "aws_sqs_queue_policy" "payment_notification_policy" {
       {
         Effect = "Allow"
         Principal = "*"
-        Action   = "sqs:SendMessage"
+        Action = "sqs:SendMessage"
         Resource = aws_sqs_queue.payment_notification.arn
         Condition = {
           ArnEquals = {
@@ -143,7 +143,7 @@ resource "aws_sqs_queue_policy" "email_policy" {
       {
         Effect = "Allow"
         Principal = "*"
-        Action   = "sqs:SendMessage"
+        Action = "sqs:SendMessage"
         Resource = aws_sqs_queue.email.arn
         Condition = {
           ArnEquals = {

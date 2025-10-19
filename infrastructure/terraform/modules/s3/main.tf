@@ -40,6 +40,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "invoices" {
     id     = "transition-to-ia"
     status = "Enabled"
 
+    filter {
+      prefix = ""
+    }
+
     transition {
       days          = 90
       storage_class = "STANDARD_IA"
@@ -50,6 +54,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "invoices" {
     id     = "transition-to-glacier"
     status = "Enabled"
 
+    filter {
+      prefix = ""
+    }
+
     transition {
       days          = 180
       storage_class = "GLACIER"
@@ -59,6 +67,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "invoices" {
   rule {
     id     = "delete-old-versions"
     status = "Enabled"
+
+    filter {
+      prefix = ""
+    }
 
     noncurrent_version_expiration {
       noncurrent_days = 90

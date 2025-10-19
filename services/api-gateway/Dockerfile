@@ -2,12 +2,18 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Create a minimal workspace definition for build context
+RUN printf "packages:\n  - \"services/*\"\n  - \"packages/*\"\n" > pnpm-workspace.yaml
+
 COPY package.json pnpm-lock.yaml ./
 COPY packages/shared ./packages/shared
 COPY services/api-gateway ./services/api-gateway
 
 RUN npm install -g pnpm@8.15.8
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
+
+# Build shared workspace to generate type declarations
+RUN pnpm --filter "@invoice-saas/shared" build
 
 WORKDIR /app/services/api-gateway
 RUN pnpm build
