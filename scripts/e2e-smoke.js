@@ -1,14 +1,10 @@
 /*
  Simple E2E smoke test that checks the API Gateway health endpoint.
- Requires API_URL env var like https://api.example.com
+ Uses API_URL if provided, otherwise falls back to http://localhost:3000
 */
 (async () => {
   try {
-    const base = process.env.API_URL;
-    if (!base) {
-      console.error('API_URL is not set');
-      process.exit(1);
-    }
+    const base = process.env.API_URL || 'http://localhost:3000';
     const url = base.endsWith('/') ? `${base}health` : `${base}/health`;
     const res = await fetch(url, { method: 'GET', redirect: 'follow' });
     if (!res.ok) {
