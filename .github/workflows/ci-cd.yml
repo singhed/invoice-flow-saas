@@ -289,11 +289,20 @@ jobs:
           kubectl get pods -n invoice-saas
           kubectl get services -n invoice-saas
 
+  e2e-tests-pr:
+    name: E2E Checks (PR)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify E2E job runs on PR
+        run: echo "E2E checks placeholder on PR"
+
   e2e-tests:
     name: End-to-End Tests
     runs-on: ubuntu-latest
     needs: [deploy-to-eks]
-    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
       
@@ -310,14 +319,9 @@ jobs:
         run: pnpm install --frozen-lockfile
       
       - name: Run E2E tests
-        if: github.event_name != 'pull_request'
         run: pnpm run test:e2e
         env:
           API_URL: ${{ secrets.API_GATEWAY_URL }}
-      
-      - name: Skip E2E on PR
-        if: github.event_name == 'pull_request'
-        run: echo "Skipping E2E tests on pull_request"
 
   deploy-frontend:
     name: Deploy Frontend to Render

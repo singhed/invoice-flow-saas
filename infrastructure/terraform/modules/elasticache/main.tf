@@ -60,11 +60,10 @@ resource "aws_elasticache_replication_group" "main" {
   port           = 6379
 
   node_type = var.node_type
-
-  cluster_mode {
-    num_node_groups         = var.num_cache_clusters
-    replicas_per_node_group = var.replicas_per_shard
-  }
+  
+  # Cluster mode (sharded) configuration as top-level arguments per AWS provider schema
+  num_node_groups         = var.num_cache_clusters
+  replicas_per_node_group = var.replicas_per_shard
 
   parameter_group_name = aws_elasticache_parameter_group.main.name
   subnet_group_name    = aws_elasticache_subnet_group.main.name
