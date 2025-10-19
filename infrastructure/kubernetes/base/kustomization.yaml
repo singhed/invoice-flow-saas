@@ -10,6 +10,6 @@ resources:
   - api-gateway-deployment.yaml
   - invoice-service-deployment.yaml
 
-commonLabels:
+labels:
   app.kubernetes.io/managed-by: kustomize
   app.kubernetes.io/part-of: invoice-saas
