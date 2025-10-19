@@ -1,6 +1,8 @@
 export type Locale = "en" | "es" | "zh";
 
-export type Messages = Record<string, string | Messages>;
+export interface Messages {
+  [key: string]: string | Messages;
+}
 
 export const DEFAULT_LOCALE: Locale = "en";
 
