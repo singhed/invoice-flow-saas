@@ -11,5 +11,7 @@ resources:
   - invoice-service-deployment.yaml
 
 labels:
-  app.kubernetes.io/managed-by: kustomize
-  app.kubernetes.io/part-of: invoice-saas
+  - pairs:
+      app.kubernetes.io/managed-by: kustomize
+      app.kubernetes.io/part-of: invoice-saas
+    includeSelectors: true
