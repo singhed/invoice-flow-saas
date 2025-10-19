@@ -53,45 +53,48 @@ resource "aws_elasticache_parameter_group" "main" {
 
 resource "aws_elasticache_replication_group" "main" {
   replication_group_id = "${var.project_name}-${var.environment}-redis"
-  replication_group_description = "Redis cluster for ${var.project_name} ${var.environment}"
+  description          = "Redis cluster for ${var.project_name} ${var.environment}"
 
-  engine = "redis"
+  engine         = "redis"
   engine_version = "7.0"
-  port = 6379
+  port           = 6379
 
   node_type = var.node_type
-  num_node_groups = var.num_cache_clusters
-  replicas_per_node_group = var.replicas_per_shard
+
+  cluster_mode {
+    num_node_groups         = var.num_cache_clusters
+    replicas_per_node_group = var.replicas_per_shard
+  }
 
   parameter_group_name = aws_elasticache_parameter_group.main.name
-  subnet_group_name = aws_elasticache_subnet_group.main.name
-  security_group_ids = [aws_security_group.redis.id]
+  subnet_group_name    = aws_elasticache_subnet_group.main.name
+  security_group_ids   = [aws_security_group.redis.id]
 
   at_rest_encryption_enabled = true
   transit_encryption_enabled = true
-  auth_token_enabled = true
+  auth_token                 = random_password.auth_token.result
 
   automatic_failover_enabled = true
-  multi_az_enabled = true
+  multi_az_enabled           = true
 
   snapshot_retention_limit = 5
-  snapshot_window = "03:00-05:00"
-  maintenance_window = "mon:05:00-mon:07:00"
+  snapshot_window          = "03:00-05:00"
+  maintenance_window       = "mon:05:00-mon:07:00"
 
   auto_minor_version_upgrade = true
 
   log_delivery_configuration {
-    destination = aws_cloudwatch_log_group.redis_slow_log.name
+    destination      = aws_cloudwatch_log_group.redis_slow_log.name
     destination_type = "cloudwatch-logs"
-    log_format = "json"
-    log_type = "slow-log"
+    log_format       = "json"
+    log_type         = "slow-log"
   }
 
   log_delivery_configuration {
-    destination = aws_cloudwatch_log_group.redis_engine_log.name
+    destination      = aws_cloudwatch_log_group.redis_engine_log.name
     destination_type = "cloudwatch-logs"
-    log_format = "json"
-    log_type = "engine-log"
+    log_format       = "json"
+    log_type         = "engine-log"
   }
 
   tags = {
