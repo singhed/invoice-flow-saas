@@ -480,7 +480,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🗺️ Roadmap
 
 - [ ] Multi-tenancy support
-- [ ] Advanced analytics dashboard
+- [x] Advanced analytics dashboard
 - [ ] Recurring invoice automation
 - [ ] Multi-currency support
 - [ ] Mobile applications (iOS/Android)
@@ -499,6 +499,31 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - ✅ **CI/CD**: Automated pipelines
 - ✅ **Monitoring**: CloudWatch integration
 - ✅ **Documentation**: Complete
+
+## 📊 Advanced Analytics Dashboard
+
+The application now includes an interactive Advanced Analytics Dashboard in the web app with:
+
+- KPI cards: Total Users, Total Revenue, Conversion Rate, Avg. Session Duration
+- Time series: Daily Active Users with 7-day moving average and anomaly detection
+- Revenue breakdown: Aggregated revenue by channel
+- Device distribution: Donut chart of Desktop, Mobile, and Tablet traffic
+- Conversion funnel: Visits ➜ Product View ➜ Add to Cart ➜ Checkout ➜ Purchase
+- Cohort analysis: Weekly retention heatmap across 12 cohorts and 8 weeks
+
+How to use:
+
+1. Start the web app (see Quick Start above):
+   - pnpm dev (from the repo root) or pnpm --filter web dev (from apps/web)
+2. Open the browser to http://localhost:3000/analytics
+3. Use filters to slice data by date range, channels, and devices. The charts update instantly.
+
+Notes:
+- Data is synthetic and generated deterministically for consistent demos. No backend is required.
+- The dashboard runs client-side and loads Apache ECharts via CDN for rich visualizations.
+- The page is responsive and adapts from mobile to wide desktop breakpoints.
+
+Additional docs: See docs/ANALYTICS_DASHBOARD.md for architecture, configuration, and extension tips.
 
 ---
 

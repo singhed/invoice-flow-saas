@@ -38,6 +38,7 @@ export const DICTIONARIES: Record<Locale, Messages> = {
     navbar: {
       home: "Home",
       invoices: "Invoices",
+      analytics: "Analytics",
       docs: "Docs",
       get_started: "Get Started",
       beta: "Beta",
@@ -118,6 +119,7 @@ export const DICTIONARIES: Record<Locale, Messages> = {
     navbar: {
       home: "Inicio",
       invoices: "Facturas",
+      analytics: "Analítica",
       docs: "Docs",
       get_started: "Comenzar",
       beta: "Beta",
@@ -198,6 +200,7 @@ export const DICTIONARIES: Record<Locale, Messages> = {
     navbar: {
       home: "首页",
       invoices: "发票",
+      analytics: "分析",
       docs: "文档",
       get_started: "开始使用",
       beta: "测试版",

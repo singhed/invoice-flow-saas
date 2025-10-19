@@ -40,6 +40,12 @@ export function Navbar() {
             >
               {t("navbar.invoices")}
             </Link>
+            <Link
+              href="/analytics"
+              className="text-sm text-muted-foreground transition-colors hover:text-primary"
+            >
+              {t("navbar.analytics")}
+            </Link>
             <a
               className="hidden text-sm text-muted-foreground transition-colors hover:text-primary md:inline"
               href="https://nextjs.org/docs"
