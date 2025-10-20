@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui";
 import { env } from "@/env";
 import Link from "next/link";
@@ -10,22 +10,18 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [csrfToken, setCsrfToken] = useState<string>("");
 
   const API_BASE = env.NEXT_PUBLIC_AUTH_API_URL || env.NEXT_PUBLIC_API_URL;
 
-  useEffect(() => {
-    async function fetchCsrf() {
-      try {
-        const res = await fetch(`${API_BASE}/api/auth/csrf-token`, { credentials: "include" });
-        const data = await res.json();
-        setCsrfToken(data?.csrfToken || "");
-      } catch (err) {
-        // ignore; will be handled on submit
-      }
+  async function fetchCsrfToken(): Promise<string> {
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/csrf-token`, { credentials: "include" });
+      const data = await res.json();
+      return data?.csrfToken || "";
+    } catch {
+      return "";
     }
-    fetchCsrf();
-  }, [API_BASE]);
+  }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -33,9 +29,13 @@ export default function LoginPage() {
     setMessage(null);
 
     try {
+      const token = await fetchCsrfToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["X-CSRF-Token"] = token;
+
       const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
+        headers,
         credentials: "include",
         body: JSON.stringify({ email, password }),
       });

@@ -1,25 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { env } from "@/env";
 import Link from "next/link";
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = window.localStorage.getItem("auth_user");
+        return stored ? JSON.parse(stored) : null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [csrfToken, setCsrfToken] = useState<string>("");
 
   const API_BASE = env.NEXT_PUBLIC_AUTH_API_URL || env.NEXT_PUBLIC_API_URL;
 
-  async function fetchCsrf() {
+  async function fetchCsrfToken(): Promise<string> {
     try {
       const res = await fetch(`${API_BASE}/api/auth/csrf-token`, { credentials: "include" });
       const data = await res.json();
-      setCsrfToken(data?.csrfToken || "");
+      return data?.csrfToken || "";
     } catch {
-      // ignore
+      return "";
     }
   }
 
@@ -40,24 +49,24 @@ export default function ProfilePage() {
         throw new Error(data?.message || data?.detail || `Failed to load profile (${res.status})`);
       }
       setUser(data.user);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("auth_user", JSON.stringify(data.user));
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load profile");
     }
   }
 
-  useEffect(() => {
-    fetchCsrf();
-    fetchMe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   async function handleRefreshAccess() {
     setError(null);
     setMessage(null);
     try {
+      const token = await fetchCsrfToken();
+      const headers: Record<string, string> = {};
+      if (token) headers["X-CSRF-Token"] = token;
       const res = await fetch(`${API_BASE}/api/auth/refresh`, {
         method: "POST",
-        headers: { "X-CSRF-Token": csrfToken },
+        headers,
         credentials: "include",
       });
       const data = await res.json();
@@ -77,9 +86,12 @@ export default function ProfilePage() {
     setError(null);
     setMessage(null);
     try {
+      const token = await fetchCsrfToken();
+      const headers: Record<string, string> = {};
+      if (token) headers["X-CSRF-Token"] = token;
       await fetch(`${API_BASE}/api/auth/logout`, {
         method: "POST",
-        headers: { "X-CSRF-Token": csrfToken },
+        headers,
         credentials: "include",
       });
     } catch {
