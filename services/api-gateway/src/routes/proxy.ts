@@ -7,6 +7,7 @@ const router = Router();
 const INVOICE_SERVICE_URL = process.env.INVOICE_SERVICE_URL || 'http://invoice-service:3001';
 const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || 'http://payment-service:3002';
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://user-service:3003';
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3003';
 
 const proxyRequest = async (req: any, res: any, targetUrl: string) => {
   try {
@@ -14,14 +15,30 @@ const proxyRequest = async (req: any, res: any, targetUrl: string) => {
       method: req.method,
       url: `${targetUrl}${req.path}`,
       data: req.body,
+      // Remove hop-by-hop and restricted headers
       headers: {
         ...req.headers,
         host: undefined,
+        connection: undefined,
+        'content-length': undefined,
       },
       params: req.query,
+      validateStatus: () => true,
     });
 
-    res.status(response.status).json(response.data);
+    // Forward Set-Cookie if present (needed for CSRF secret and refresh token cookies)
+    const setCookie = response.headers['set-cookie'];
+    if (setCookie) {
+      res.setHeader('set-cookie', setCookie);
+    }
+
+    // Forward content-type if present
+    const contentType = response.headers['content-type'];
+    if (contentType) {
+      res.setHeader('content-type', contentType);
+    }
+
+    res.status(response.status).send(response.data);
   } catch (error: any) {
     logger.error('Proxy request failed:', error);
     res.status(error.response?.status || 500).json({
@@ -34,6 +51,6 @@ const proxyRequest = async (req: any, res: any, targetUrl: string) => {
 router.all('/invoices*', (req, res) => proxyRequest(req, res, INVOICE_SERVICE_URL));
 router.all('/payments*', (req, res) => proxyRequest(req, res, PAYMENT_SERVICE_URL));
 router.all('/users*', (req, res) => proxyRequest(req, res, USER_SERVICE_URL));
-router.all('/auth*', (req, res) => proxyRequest(req, res, USER_SERVICE_URL));
+router.all('/auth*', (req, res) => proxyRequest(req, res, AUTH_SERVICE_URL));
 
 export default router;

@@ -22,6 +22,10 @@ Failure Domains
 
 Security
 - Strict input validation, header allow-lists, HSTS, CORS controls, WAF integration.
+- CSRF protections: strict Origin checks on state-changing unauthenticated auth endpoints and double-submit token validation performed by auth-service. The gateway forwards X-CSRF-Token headers.
+- HTTP Parameter Pollution (HPP) mitigation via hpp middleware.
+- CORS allows only configured ALLOWED_ORIGINS and permits the X-CSRF-Token header; credentials supported when needed.
+- Helmet-enabled headers and disabled x-powered-by for reduced fingerprinting.
 
 Operations
 - Autoscaled by RPS and p99 latency; pod disruption budgets; preStop hooks for connection draining.

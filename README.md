@@ -376,6 +376,71 @@ curl -X POST http://localhost:3000/api/invoices \
   }'
 ```
 
+### Authentication & Rate Limiting
+
+This repository ships with a working authentication flow behind the API Gateway and a strict rate limiting policy:
+
+- Endpoints (via API Gateway):
+  - POST /api/auth/register → Create a new user and receive a JWT
+  - POST /api/auth/login → Authenticate and receive a JWT
+  - POST /api/auth/refresh → Rotate refresh token cookie and return a new access token
+  - POST /api/auth/logout → Revoke refresh token and clear cookie
+  - GET /api/auth/me → Get the authenticated user's profile
+- Tokens:
+  - Access: JWT (HS256) signed with JWT_SECRET, provided as Authorization: Bearer <token>, expires in 15 minutes
+  - Refresh: JWT (HS256) signed with REFRESH_TOKEN_SECRET, stored as HttpOnly SameSite=Lax cookie `rt` (scoped to /api/auth), expires in 7 days and is rotated on each refresh
+- Rate limits:
+  - Global: 100 requests / 15 minutes per IP
+  - Auth endpoints: 10 requests / 15 minutes per IP + email combination
+
+Local development quickstart:
+
+```bash
+# 1. Install dependencies
+pnpm install
+
+# 2. Copy env and edit secrets
+cp .env.example .env
+
+# 3. Start services
+# API Gateway (http://localhost:3000)
+pnpm --filter @invoice-saas/api-gateway dev
+
+# User Service with auth endpoints (http://localhost:3003)
+pnpm --filter @invoice-saas/user-service dev
+
+# Web frontend (http://localhost:3000 by Next default, if run separately in /apps/web)
+pnpm --filter web dev
+```
+
+Frontend auth pages are available at:
+- /auth/register - create an account
+- /auth/login - sign in and store JWT in localStorage
+
+See docs/services/auth-service.md for full details of the implementation.
+
+### Security Hardening
+
+The platform implements multiple layers of defense to minimize vulnerabilities:
+
+- CSRF Protection
+  - Double-submit token via GET /api/auth/csrf-token and X-CSRF-Token header on POSTs
+  - Strict Origin checks at the API Gateway for unauthenticated state-changing auth endpoints
+- Input Validation & Sanitization
+  - Strong schema validation with Joi on all auth inputs (length, format, complexity)
+  - XSS mitigation by sanitizing free-text fields on input
+  - HTTP Parameter Pollution (HPP) blocked at both gateway and user-service
+- Secure Defaults
+  - Helmet for secure headers (HSTS, X-Content-Type-Options, etc.)
+  - CORS restricted to ALLOWED_ORIGINS with explicit header allow-list
+  - Rate limiting: global and per-identity for auth endpoints
+  - JWT signed with JWT_SECRET, 1h expiration
+- Operational Practices
+  - Centralized error handling without leaking sensitive details
+  - x-powered-by disabled to reduce fingerprinting
+
+Note: The provided auth service stores users in-memory for demo purposes. For production, use a database with parameterized queries, per-user password hashing (e.g., Argon2id), refresh tokens, and full device/session management.
+
 ## 📊 Monitoring
 
 ### CloudWatch Dashboards
