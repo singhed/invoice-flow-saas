@@ -21,8 +21,10 @@ function getSystemTheme(): "light" | "dark" {
 function applyThemeClass(next: "light" | "dark") {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
-  const isDark = next === "dark";
-  root.classList.toggle("dark", isDark);
+  const shouldBeDark = next === "dark";
+  const alreadyDark = root.classList.contains("dark");
+  if (alreadyDark === shouldBeDark) return;
+  root.classList.toggle("dark", shouldBeDark);
 }
 
 export interface ThemeProviderProps {
@@ -65,9 +67,13 @@ function createThemeStore(storageKey: string, defaultTheme: Theme): ThemeStore {
   if (typeof window !== "undefined" && window.matchMedia) {
     const mql = window.matchMedia("(prefers-color-scheme: dark)");
     const onSystemChange = () => {
+      const prevEffective = effective();
       system = getSystemTheme();
       if (theme === "system") {
-        applyThemeClass(effective());
+        const nextEffective = effective();
+        if (nextEffective !== prevEffective) {
+          applyThemeClass(nextEffective);
+        }
       }
       listeners.forEach((l) => l());
     };
@@ -79,8 +85,13 @@ function createThemeStore(storageKey: string, defaultTheme: Theme): ThemeStore {
     const onStorage = (e: StorageEvent) => {
       if (e.key !== storageKey) return;
       const value = (e.newValue as Theme | null) ?? defaultTheme;
+      if (value === theme) return;
+      const prevEffective = effective();
       theme = value;
-      applyThemeClass(effective());
+      const nextEffective = effective();
+      if (nextEffective !== prevEffective) {
+        applyThemeClass(nextEffective);
+      }
       listeners.forEach((l) => l());
     };
     window.addEventListener("storage", onStorage);
@@ -93,11 +104,16 @@ function createThemeStore(storageKey: string, defaultTheme: Theme): ThemeStore {
     },
     getSnapshot: () => ({ theme, system }),
     setTheme: (value: Theme) => {
+      if (theme === value) return;
+      const prevEffective = effective();
       theme = value;
       if (typeof window !== "undefined") {
         localStorage.setItem(storageKey, value);
       }
-      applyThemeClass(effective());
+      const nextEffective = effective();
+      if (nextEffective !== prevEffective) {
+        applyThemeClass(nextEffective);
+      }
       listeners.forEach((l) => l());
     },
     toggle: () => {

@@ -19,7 +19,6 @@ export default function ProfilePage() {
   });
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [csrfToken, setCsrfToken] = useState<string>("");
 
   const API_BASE = env.NEXT_PUBLIC_AUTH_API_URL || env.NEXT_PUBLIC_API_URL;
 
@@ -27,9 +26,7 @@ export default function ProfilePage() {
     try {
       const res = await fetch(`${API_BASE}/api/auth/csrf-token`, { credentials: "include" });
       const data = await res.json();
-      const token = data?.csrfToken || "";
-      setCsrfToken(token);
-      return token;
+      return data?.csrfToken || "";
     } catch {
       return "";
     }
@@ -64,7 +61,7 @@ export default function ProfilePage() {
     setError(null);
     setMessage(null);
     try {
-      const token = csrfToken || (await fetchCsrfToken());
+      const token = await fetchCsrfToken();
       const headers: Record<string, string> = {};
       if (token) headers["X-CSRF-Token"] = token;
       const res = await fetch(`${API_BASE}/api/auth/refresh`, {
@@ -89,7 +86,7 @@ export default function ProfilePage() {
     setError(null);
     setMessage(null);
     try {
-      const token = csrfToken || (await fetchCsrfToken());
+      const token = await fetchCsrfToken();
       const headers: Record<string, string> = {};
       if (token) headers["X-CSRF-Token"] = token;
       await fetch(`${API_BASE}/api/auth/logout`, {
