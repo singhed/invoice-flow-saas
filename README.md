@@ -383,9 +383,12 @@ This repository ships with a working authentication flow behind the API Gateway 
 - Endpoints (via API Gateway):
   - POST /api/auth/register → Create a new user and receive a JWT
   - POST /api/auth/login → Authenticate and receive a JWT
+  - POST /api/auth/refresh → Rotate refresh token cookie and return a new access token
+  - POST /api/auth/logout → Revoke refresh token and clear cookie
   - GET /api/auth/me → Get the authenticated user's profile
-- Token: JWT (HS256) signed with JWT_SECRET. Provide as Authorization: Bearer <token>
-- Expiration: 1 hour (configurable in code)
+- Tokens:
+  - Access: JWT (HS256) signed with JWT_SECRET, provided as Authorization: Bearer <token>, expires in 15 minutes
+  - Refresh: JWT (HS256) signed with REFRESH_TOKEN_SECRET, stored as HttpOnly SameSite=Lax cookie `rt` (scoped to /api/auth), expires in 7 days and is rotated on each refresh
 - Rate limits:
   - Global: 100 requests / 15 minutes per IP
   - Auth endpoints: 10 requests / 15 minutes per IP + email combination

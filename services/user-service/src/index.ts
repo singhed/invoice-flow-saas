@@ -17,7 +17,8 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3003;
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const ACCESS_TOKEN_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || ACCESS_TOKEN_SECRET;
 
 app.disable('x-powered-by');
 app.use(helmet());
@@ -56,6 +57,34 @@ interface User {
 
 const users = new Map<string, User>(); // key by email lowercased
 
+// In-memory refresh token store (rotation, revocation)
+interface RefreshRecord { userId: string; revoked: boolean; expiresAt: number; replacedBy?: string }
+const refreshStore = new Map<string, RefreshRecord>(); // jti -> record
+
+// Token helpers
+function signAccessToken(user: User) {
+  return jwt.sign({ id: user.id, email: user.email, role: user.role }, ACCESS_TOKEN_SECRET, { expiresIn: '15m' });
+}
+
+function signRefreshToken(user: User) {
+  const jti = uuidv4();
+  const token = jwt.sign({ sub: user.id, jti }, REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
+  const payload = jwt.decode(token) as any;
+  const exp = typeof payload?.exp === 'number' ? payload.exp * 1000 : Date.now() + 7 * 24 * 60 * 60 * 1000;
+  refreshStore.set(jti, { userId: user.id, revoked: false, expiresAt: exp });
+  return { token, jti };
+}
+
+function setRefreshCookie(res: express.Response, token: string) {
+  res.cookie('rt', token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/api/auth',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+}
+
 // Global rate limiter
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -73,9 +102,9 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   message: 'Too many auth attempts, please try again later.',
   keyGenerator: (req) => {
-    const ip = req.ip || req.headers['x-forwarded-for']?.toString() || 'unknown';
+    const ip = req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
     try {
-      const email = (req.body?.email || '').toLowerCase();
+      const email = (req.body as any)?.email?.toLowerCase?.() || '';
       return `${ip}:${email}`;
     } catch {
       return ip;
@@ -148,7 +177,9 @@ app.post('/auth/register', authLimiter, csrfProtection, validateBody(registerSch
 
     users.set(normalizedEmail, user);
 
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
+    const accessToken = signAccessToken(user);
+    const { token: refreshToken } = signRefreshToken(user);
+    setRefreshCookie(res, refreshToken);
 
     res.status(201).json({
       status: 'success',
@@ -159,7 +190,7 @@ app.post('/auth/register', authLimiter, csrfProtection, validateBody(registerSch
         role: user.role,
         createdAt: user.createdAt,
       },
-      token,
+      token: accessToken,
     });
   } catch (err) {
     next(err);
@@ -182,7 +213,9 @@ app.post('/auth/login', authLimiter, csrfProtection, validateBody(loginSchema), 
       throw new UnauthorizedError('Invalid credentials');
     }
 
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
+    const accessToken = signAccessToken(user);
+    const { token: refreshToken } = signRefreshToken(user);
+    setRefreshCookie(res, refreshToken);
 
     res.status(200).json({
       status: 'success',
@@ -193,7 +226,7 @@ app.post('/auth/login', authLimiter, csrfProtection, validateBody(loginSchema), 
         role: user.role,
         createdAt: user.createdAt,
       },
-      token,
+      token: accessToken,
     });
   } catch (err) {
     next(err);
@@ -209,7 +242,7 @@ function authGuard(req: express.Request, res: express.Response, next: express.Ne
 
   const token = authHeader.substring(7);
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string; role: string };
+    const decoded = jwt.verify(token, ACCESS_TOKEN_SECRET) as { id: string; email: string; role: string };
     // Attach decoded user to request for downstream use
     (req as any).user = decoded;
     return next();
@@ -236,6 +269,70 @@ app.get('/auth/me', authGuard, (req, res) => {
       createdAt: user.createdAt,
     },
   });
+});
+
+// Refresh access token using refresh token cookie (rotation)
+app.post('/auth/refresh', authLimiter, csrfProtection, (req, res, next) => {
+  try {
+    const token = (req.cookies || {})['rt'];
+    if (!token) {
+      throw new UnauthorizedError('Missing refresh token');
+    }
+
+    const decoded = jwt.verify(token, REFRESH_TOKEN_SECRET) as any;
+    const jti = decoded?.jti as string;
+    const sub = decoded?.sub as string;
+    if (!jti || !sub) {
+      throw new UnauthorizedError('Invalid refresh token');
+    }
+
+    const record = refreshStore.get(jti);
+    if (!record || record.revoked || record.userId !== sub || record.expiresAt < Date.now()) {
+      throw new UnauthorizedError('Refresh token revoked or expired');
+    }
+
+    // rotate token
+    record.revoked = true;
+    const newJti = uuidv4();
+    const newRefresh = jwt.sign({ sub, jti: newJti }, REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
+    const payload = jwt.decode(newRefresh) as any;
+    const exp = typeof payload?.exp === 'number' ? payload.exp * 1000 : Date.now() + 7 * 24 * 60 * 60 * 1000;
+    refreshStore.set(newJti, { userId: sub, revoked: false, expiresAt: exp });
+    record.replacedBy = newJti;
+
+    // issue access token
+    // look up user
+    const userById = Array.from(users.values()).find((u) => u.id === sub);
+    if (!userById) {
+      throw new UnauthorizedError('Account not found');
+    }
+    const accessToken = signAccessToken(userById);
+
+    setRefreshCookie(res, newRefresh);
+
+    res.status(200).json({ status: 'success', token: accessToken });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Logout: revoke refresh token and clear cookie
+app.post('/auth/logout', authLimiter, csrfProtection, (req, res) => {
+  const token = (req.cookies || {})['rt'];
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, REFRESH_TOKEN_SECRET) as any;
+      const jti = decoded?.jti as string;
+      const record = jti ? refreshStore.get(jti) : undefined;
+      if (record) {
+        record.revoked = true;
+      }
+    } catch {
+      // ignore
+    }
+  }
+  res.clearCookie('rt', { path: '/api/auth' });
+  res.status(200).json({ status: 'success' });
 });
 
 // Centralized error handler

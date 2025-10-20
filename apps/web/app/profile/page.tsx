@@ -8,11 +8,24 @@ import Link from "next/link";
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [csrfToken, setCsrfToken] = useState<string>("");
 
   const API_BASE = env.NEXT_PUBLIC_AUTH_API_URL || env.NEXT_PUBLIC_API_URL;
 
+  async function fetchCsrf() {
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/csrf-token`, { credentials: "include" });
+      const data = await res.json();
+      setCsrfToken(data?.csrfToken || "");
+    } catch {
+      // ignore
+    }
+  }
+
   async function fetchMe() {
     setError(null);
+    setMessage(null);
     try {
       const token = typeof window !== "undefined" ? window.localStorage.getItem("auth_token") : null;
       if (!token) {
@@ -33,16 +46,51 @@ export default function ProfilePage() {
   }
 
   useEffect(() => {
+    fetchCsrf();
     fetchMe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function handleLogout() {
+  async function handleRefreshAccess() {
+    setError(null);
+    setMessage(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/refresh`, {
+        method: "POST",
+        headers: { "X-CSRF-Token": csrfToken },
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.message || data?.detail || `Failed to refresh token (${res.status})`);
+      }
+      if (data?.token && typeof window !== "undefined") {
+        window.localStorage.setItem("auth_token", data.token);
+        setMessage("Access token refreshed.");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to refresh token");
+    }
+  }
+
+  async function handleLogout() {
+    setError(null);
+    setMessage(null);
+    try {
+      await fetch(`${API_BASE}/api/auth/logout`, {
+        method: "POST",
+        headers: { "X-CSRF-Token": csrfToken },
+        credentials: "include",
+      });
+    } catch {
+      // ignore
+    }
     if (typeof window !== "undefined") {
       window.localStorage.removeItem("auth_token");
       window.localStorage.removeItem("auth_user");
     }
     setUser(null);
+    setMessage("Signed out.");
   }
 
   return (
@@ -55,6 +103,11 @@ export default function ProfilePage() {
           {error && (
             <div className="mb-4 rounded-md border border-red-400/30 bg-red-900/10 p-3 text-sm text-red-300">
               {error}
+            </div>
+          )}
+          {message && (
+            <div className="mb-4 rounded-md border border-border/60 bg-card/50 p-3 text-sm text-foreground">
+              {message}
             </div>
           )}
 
@@ -82,7 +135,8 @@ export default function ProfilePage() {
                 <div className="text-sm"><span className="text-muted-foreground">Created:</span> {user.createdAt}</div>
               </div>
               <div className="flex gap-2">
-                <Button onClick={fetchMe} variant="outline">Refresh</Button>
+                <Button onClick={fetchMe} variant="outline">Refresh profile</Button>
+                <Button onClick={handleRefreshAccess} variant="secondary">Refresh access token</Button>
                 <Button onClick={handleLogout} variant="danger">Sign out</Button>
               </div>
             </div>

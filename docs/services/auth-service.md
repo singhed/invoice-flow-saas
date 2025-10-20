@@ -17,9 +17,8 @@ Interfaces
   - GET /auth/me → Return the authenticated user
 
 Authentication
-- JWT (HS256) signed with the shared JWT_SECRET
-- Provide token in Authorization: Bearer <token>
-- Default expiration: 1 hour
+- Access Token: JWT (HS256) signed with JWT_SECRET. Provide in Authorization: Bearer <token>. Default expiration: 15 minutes
+- Refresh Token: JWT (HS256) signed with REFRESH_TOKEN_SECRET, issued as HttpOnly SameSite=Lax cookie named `rt` scoped to `/api/auth`. Default expiration: 7 days. Rotated on each refresh.
 
 Rate Limiting
 - Global: 100 req / 15 min per IP
@@ -55,6 +54,14 @@ Example Requests
 - Me
   curl http://localhost:3000/api/auth/me \
     -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+- Refresh Access Token (requires `rt` cookie)
+  curl -X POST http://localhost:3000/api/auth/refresh \
+    -H "X-CSRF-Token: <token-from-/auth/csrf-token>"
+
+- Logout (revokes refresh token and clears cookie)
+  curl -X POST http://localhost:3000/api/auth/logout \
+    -H "X-CSRF-Token: <token-from-/auth/csrf-token>"
 
 Notes
 - This service uses an in-memory user store for simplicity; restart clears users.

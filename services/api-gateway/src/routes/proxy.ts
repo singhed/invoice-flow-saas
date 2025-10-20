@@ -15,14 +15,30 @@ const proxyRequest = async (req: any, res: any, targetUrl: string) => {
       method: req.method,
       url: `${targetUrl}${req.path}`,
       data: req.body,
+      // Remove hop-by-hop and restricted headers
       headers: {
         ...req.headers,
         host: undefined,
+        connection: undefined,
+        'content-length': undefined,
       },
       params: req.query,
+      validateStatus: () => true,
     });
 
-    res.status(response.status).json(response.data);
+    // Forward Set-Cookie if present (needed for CSRF secret and refresh token cookies)
+    const setCookie = response.headers['set-cookie'];
+    if (setCookie) {
+      res.setHeader('set-cookie', setCookie);
+    }
+
+    // Forward content-type if present
+    const contentType = response.headers['content-type'];
+    if (contentType) {
+      res.setHeader('content-type', contentType);
+    }
+
+    res.status(response.status).send(response.data);
   } catch (error: any) {
     logger.error('Proxy request failed:', error);
     res.status(error.response?.status || 500).json({
