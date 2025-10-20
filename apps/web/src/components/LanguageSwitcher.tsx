@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { LANGUAGES, type Locale, isSupportedLocale } from "@/i18n";
 
@@ -21,14 +21,10 @@ function setCookie(name: string, value: string, days = 365) {
 export function LanguageSwitcher() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [value, setValue] = useState<Locale>("en");
-
-  useEffect(() => {
+  const [value, setValue] = useState<Locale>(() => {
     const cookie = getCookie("locale");
-    if (cookie && isSupportedLocale(cookie)) {
-      setValue(cookie);
-    }
-  }, []);
+    return cookie && isSupportedLocale(cookie) ? cookie : "en";
+  });
 
   const onChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const next = e.target.value;
