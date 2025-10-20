@@ -48,6 +48,9 @@ export function Navbar() {
             >
               {t("navbar.docs")}
             </a>
+            <Link href="/profile" className="text-sm text-muted-foreground transition-colors hover:text-primary">
+              Profile
+            </Link>
             <Link href="/auth/login" className="text-sm text-muted-foreground transition-colors hover:text-primary">
               Sign in
             </Link>

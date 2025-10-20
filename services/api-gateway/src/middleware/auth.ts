@@ -17,7 +17,8 @@ export const authMiddleware = (
   res: Response,
   next: NextFunction
 ): void => {
-  if (req.path === '/auth/login' || req.path === '/auth/register') {
+  // Public auth endpoints should bypass JWT auth
+  if (req.path === '/auth/login' || req.path === '/auth/register' || req.path === '/auth/csrf-token') {
     return next();
   }
 

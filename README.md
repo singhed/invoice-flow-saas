@@ -416,6 +416,28 @@ Frontend auth pages are available at:
 
 See docs/services/auth-service.md for full details of the implementation.
 
+### Security Hardening
+
+The platform implements multiple layers of defense to minimize vulnerabilities:
+
+- CSRF Protection
+  - Double-submit token via GET /api/auth/csrf-token and X-CSRF-Token header on POSTs
+  - Strict Origin checks at the API Gateway for unauthenticated state-changing auth endpoints
+- Input Validation & Sanitization
+  - Strong schema validation with Joi on all auth inputs (length, format, complexity)
+  - XSS mitigation by sanitizing free-text fields on input
+  - HTTP Parameter Pollution (HPP) blocked at both gateway and user-service
+- Secure Defaults
+  - Helmet for secure headers (HSTS, X-Content-Type-Options, etc.)
+  - CORS restricted to ALLOWED_ORIGINS with explicit header allow-list
+  - Rate limiting: global and per-identity for auth endpoints
+  - JWT signed with JWT_SECRET, 1h expiration
+- Operational Practices
+  - Centralized error handling without leaking sensitive details
+  - x-powered-by disabled to reduce fingerprinting
+
+Note: The provided auth service stores users in-memory for demo purposes. For production, use a database with parameterized queries, per-user password hashing (e.g., Argon2id), refresh tokens, and full device/session management.
+
 ## 📊 Monitoring
 
 ### CloudWatch Dashboards

@@ -1,10 +1,15 @@
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
+import hpp from 'hpp';
+import cookieParser from 'cookie-parser';
+import csrf from 'csurf';
 import rateLimit from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
+import Joi from 'joi';
+import xss from 'xss';
 import { logger, AppError, ValidationError, ConflictError, UnauthorizedError } from '@invoice-saas/shared';
 import dotenv from 'dotenv';
 
@@ -14,13 +19,30 @@ const app = express();
 const PORT = process.env.PORT || 3003;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
+app.disable('x-powered-by');
 app.use(helmet());
+
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map((o) => o.trim()).filter(Boolean);
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
+  origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
   credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }));
-app.use(express.json({ limit: '2mb' }));
-app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+
+app.use(hpp());
+app.use(cookieParser());
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// CSRF protection using cookie-based secret and double submit token pattern
+const csrfProtection = csrf({
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+  },
+});
 
 // Simple in-memory user store for demo purposes
 interface User {
@@ -61,20 +83,53 @@ const authLimiter = rateLimit({
   },
 });
 
+// CSRF token endpoint (must come before routes using csrfProtection)
+app.get('/auth/csrf-token', csrfProtection, (req, res) => {
+  const token = (req as any).csrfToken();
+  res.status(200).json({ csrfToken: token });
+});
+
+// Input validation schemas
+const registerSchema = Joi.object({
+  email: Joi.string().email({ tlds: { allow: false } }).max(254).required(),
+  password: Joi.string()
+    .min(8)
+    .max(128)
+    .pattern(/^(?=.*[A-Za-z])(?=.*\d).+$/)
+    .required()
+    .messages({ 'string.pattern.base': 'Password must include letters and numbers' }),
+  name: Joi.string().max(100).allow('', null),
+});
+
+const loginSchema = Joi.object({
+  email: Joi.string().email({ tlds: { allow: false } }).max(254).required(),
+  password: Joi.string().min(8).max(128).required(),
+});
+
+function validateBody(schema: Joi.ObjectSchema) {
+  return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const { error, value } = schema.validate(req.body, { abortEarly: false, stripUnknown: true });
+    if (error) {
+      return next(new ValidationError(error.details.map((d) => d.message).join(', ')));
+    }
+    // assign sanitized values
+    (req as any).validatedBody = value;
+    return next();
+  };
+}
+
+function sanitizeName(name?: string) {
+  if (!name) return undefined;
+  return xss(name, { whiteList: {}, stripIgnoreTag: true, stripIgnoreTagBody: ['script'] });
+}
+
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'healthy', service: 'user-service', timestamp: new Date().toISOString() });
 });
 
-app.post('/auth/register', authLimiter, async (req, res, next) => {
+app.post('/auth/register', authLimiter, csrfProtection, validateBody(registerSchema), async (req, res, next) => {
   try {
-    const { email, password, name } = req.body || {};
-
-    if (!email || typeof email !== 'string' || !email.includes('@')) {
-      throw new ValidationError('Valid email is required');
-    }
-    if (!password || typeof password !== 'string' || password.length < 8) {
-      throw new ValidationError('Password must be at least 8 characters');
-    }
+    const { email, password, name } = (req as any).validatedBody as { email: string; password: string; name?: string };
 
     const normalizedEmail = email.toLowerCase();
     if (users.has(normalizedEmail)) {
@@ -85,7 +140,7 @@ app.post('/auth/register', authLimiter, async (req, res, next) => {
     const user: User = {
       id: uuidv4(),
       email: normalizedEmail,
-      name,
+      name: sanitizeName(name),
       passwordHash,
       role: 'user',
       createdAt: new Date().toISOString(),
@@ -111,16 +166,9 @@ app.post('/auth/register', authLimiter, async (req, res, next) => {
   }
 });
 
-app.post('/auth/login', authLimiter, async (req, res, next) => {
+app.post('/auth/login', authLimiter, csrfProtection, validateBody(loginSchema), async (req, res, next) => {
   try {
-    const { email, password } = req.body || {};
-
-    if (!email || typeof email !== 'string' || !email.includes('@')) {
-      throw new ValidationError('Valid email is required');
-    }
-    if (!password || typeof password !== 'string') {
-      throw new ValidationError('Password is required');
-    }
+    const { email, password } = (req as any).validatedBody as { email: string; password: string };
 
     const normalizedEmail = email.toLowerCase();
     const user = users.get(normalizedEmail);
@@ -191,7 +239,12 @@ app.get('/auth/me', authGuard, (req, res) => {
 });
 
 // Centralized error handler
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (err.code === 'EBADCSRFTOKEN') {
+    logger.warn('Invalid CSRF token');
+    return res.status(403).json({ status: 'error', message: 'Invalid CSRF token' });
+  }
+
   if (err instanceof AppError) {
     logger.error('User Service error', { statusCode: err.statusCode, message: err.message });
     return res.status(err.statusCode).json({ status: 'error', message: err.message });

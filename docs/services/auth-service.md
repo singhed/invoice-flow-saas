@@ -11,6 +11,7 @@ Key Responsibilities
 
 Interfaces
 - REST endpoints (served via API Gateway under the /api prefix):
+  - GET /auth/csrf-token → Issue a CSRF token (required for subsequent POSTs)
   - POST /auth/register → Create a new user and return a JWT
   - POST /auth/login → Authenticate user and return a JWT
   - GET /auth/me → Return the authenticated user
@@ -41,9 +42,14 @@ Example Requests
     -H "Content-Type: application/json" \
     -d '{"email":"user@example.com","password":"SecurePassword123!","name":"Jane"}'
 
+- CSRF Token
+  curl -X GET http://localhost:3000/api/auth/csrf-token \
+    -H "Accept: application/json" -i
+
 - Login
   curl -X POST http://localhost:3000/api/auth/login \
     -H "Content-Type: application/json" \
+    -H "X-CSRF-Token: <token-from-previous-step>" \
     -d '{"email":"user@example.com","password":"SecurePassword123!"}'
 
 - Me
