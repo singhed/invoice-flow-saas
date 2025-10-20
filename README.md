@@ -376,6 +376,46 @@ curl -X POST http://localhost:3000/api/invoices \
   }'
 ```
 
+### Authentication & Rate Limiting
+
+This repository ships with a working authentication flow behind the API Gateway and a strict rate limiting policy:
+
+- Endpoints (via API Gateway):
+  - POST /api/auth/register → Create a new user and receive a JWT
+  - POST /api/auth/login → Authenticate and receive a JWT
+  - GET /api/auth/me → Get the authenticated user's profile
+- Token: JWT (HS256) signed with JWT_SECRET. Provide as Authorization: Bearer <token>
+- Expiration: 1 hour (configurable in code)
+- Rate limits:
+  - Global: 100 requests / 15 minutes per IP
+  - Auth endpoints: 10 requests / 15 minutes per IP + email combination
+
+Local development quickstart:
+
+```bash
+# 1. Install dependencies
+pnpm install
+
+# 2. Copy env and edit secrets
+cp .env.example .env
+
+# 3. Start services
+# API Gateway (http://localhost:3000)
+pnpm --filter @invoice-saas/api-gateway dev
+
+# User Service with auth endpoints (http://localhost:3003)
+pnpm --filter @invoice-saas/user-service dev
+
+# Web frontend (http://localhost:3000 by Next default, if run separately in /apps/web)
+pnpm --filter web dev
+```
+
+Frontend auth pages are available at:
+- /auth/register - create an account
+- /auth/login - sign in and store JWT in localStorage
+
+See docs/services/auth-service.md for full details of the implementation.
+
 ## 📊 Monitoring
 
 ### CloudWatch Dashboards

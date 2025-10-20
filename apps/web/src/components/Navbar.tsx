@@ -48,9 +48,12 @@ export function Navbar() {
             >
               {t("navbar.docs")}
             </a>
+            <Link href="/auth/login" className="text-sm text-muted-foreground transition-colors hover:text-primary">
+              Sign in
+            </Link>
             <div className="hidden md:block">
-              <Link href="/invoices" className="inline-flex">
-                <Button size="sm" variant="primary">{t("navbar.get_started")}</Button>
+              <Link href="/auth/register" className="inline-flex">
+                <Button size="sm" variant="primary">Create account</Button>
               </Link>
             </div>
             <LanguageSwitcher />
