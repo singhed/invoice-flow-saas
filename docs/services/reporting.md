@@ -41,3 +41,21 @@ Excel (xlsx):
 - Summary sheet: grouped totals by the chosen groupBy field, with bold totals row
 
 Note: Data is synthetic for demonstration. Integrate with your data source by replacing the GenerateSampleData function in apps/api/internal/reporting/report.go.
+
+## S3 Storage
+
+Terraform now provisions a dedicated S3 bucket for exports:
+- Bucket name: <project>-<env>-reports
+- Versioning, default encryption (SSE-S3), lifecycle (IA/Glacier), and public access blocks enabled
+
+Root Terraform outputs include:
+- s3_report_bucket_name
+- s3_report_bucket_arn
+
+The API optionally uploads each generated export to this S3 bucket when configured via env vars:
+
+Environment variables (in .env):
+- REPORTS_S3_BUCKET: Bucket name (e.g., invoice-saas-dev-reports)
+- REPORTS_S3_PREFIX: Optional key prefix (e.g., exports/advanced)
+
+When REPORTS_S3_BUCKET is set, the export is streamed back to the client and also uploaded to S3 using the filename pattern: report_YYYYMMDD_hhmmss.(pdf|xlsx).

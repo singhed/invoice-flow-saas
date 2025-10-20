@@ -87,6 +87,16 @@ output "s3_invoice_bucket_arn" {
   value       = module.s3.invoice_bucket_arn
 }
 
+output "s3_report_bucket_name" {
+  description = "S3 bucket name for reports"
+  value       = module.s3.report_bucket_name
+}
+
+output "s3_report_bucket_arn" {
+  description = "S3 bucket ARN for reports"
+  value       = module.s3.report_bucket_arn
+}
+
 output "cloudwatch_log_group_name" {
   description = "CloudWatch log group name"
   value       = module.cloudwatch.log_group_name

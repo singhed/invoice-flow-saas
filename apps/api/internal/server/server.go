@@ -1,15 +1,19 @@
 package server
 
 import (
+    "bytes"
+    "context"
     "encoding/json"
     "fmt"
     "log"
     "net/http"
+    "os"
     "strconv"
     "strings"
     "time"
 
     "github.com/example/next-go-monorepo/apps/api/internal/reporting"
+    "github.com/example/next-go-monorepo/apps/api/internal/storage"
 )
 
 // Config stores runtime configuration for the HTTP server.
@@ -133,25 +137,59 @@ func (s *Server) handleReportExport(w http.ResponseWriter, r *http.Request) {
     }
     data := reporting.GenerateSampleData(count, start, end)
 
-    // Set headers and write content
+    // Generate into buffer
     ts := time.Now().Format("20060102_150405")
+    var (
+        buf         bytes.Buffer
+        contentType string
+        filename    string
+        ext         string
+    )
+
     switch format {
     case string(reporting.FormatExcel):
-        w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=report_%s.xlsx", ts))
-        w.Header().Set("Cache-Control", "no-store")
-        if err := reporting.WriteExcelReport(w, data, opts); err != nil {
+        contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ext = "xlsx"
+        filename = fmt.Sprintf("report_%s.%s", ts, ext)
+        if err := reporting.WriteExcelReport(&buf, data, opts); err != nil {
             log.Printf("excel export error: %v", err)
+            http.Error(w, "failed to generate excel", http.StatusInternalServerError)
+            return
         }
-        return
     default:
-        w.Header().Set("Content-Type", "application/pdf")
-        w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=report_%s.pdf", ts))
-        w.Header().Set("Cache-Control", "no-store")
-        if err := reporting.WritePDFReport(w, data, opts); err != nil {
+        contentType = "application/pdf"
+        ext = "pdf"
+        filename = fmt.Sprintf("report_%s.%s", ts, ext)
+        if err := reporting.WritePDFReport(&buf, data, opts); err != nil {
             log.Printf("pdf export error: %v", err)
+            http.Error(w, "failed to generate pdf", http.StatusInternalServerError)
+            return
         }
-        return
+    }
+
+    // Write response
+    w.Header().Set("Content-Type", contentType)
+    w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+    w.Header().Set("Cache-Control", "no-store")
+    if _, err := w.Write(buf.Bytes()); err != nil {
+        log.Printf("write response error: %v", err)
+    }
+
+    // Optionally upload to S3 if configured
+    bucket := strings.TrimSpace(os.Getenv("REPORTS_S3_BUCKET"))
+    prefix := strings.Trim(strings.TrimSpace(os.Getenv("REPORTS_S3_PREFIX")), "/")
+    if bucket != "" {
+        key := filename
+        if prefix != "" {
+            key = prefix + "/" + filename
+        }
+        ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+        defer cancel()
+        if err := storage.UploadToS3(ctx, bucket, key, bytes.NewReader(buf.Bytes()), contentType); err != nil {
+            log.Printf("s3 upload error: %v", err)
+        } else {
+            log.Printf("uploaded report to s3 bucket=%s key=%s", bucket, key)
+        }
     }
 }
 
