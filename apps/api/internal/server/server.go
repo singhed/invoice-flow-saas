@@ -3,17 +3,25 @@ package server
 import (
     "log"
     "net/http"
+    "os"
+    "strconv"
+    "strings"
     "time"
 
     "github.com/gorilla/mux"
+    "golang.org/x/time/rate"
     
     "github.com/example/next-go-monorepo/apps/api/internal/database"
     "github.com/example/next-go-monorepo/apps/api/internal/handlers"
+    "github.com/example/next-go-monorepo/apps/api/internal/middleware"
 )
 
 // Config stores runtime configuration for the HTTP server.
 type Config struct {
-    AllowedOrigins []string
+    AllowedOrigins    []string
+    RateLimitEnabled  bool
+    RequestsPerSecond float64
+    BurstSize         int
 }
 
 // Server represents the API HTTP server.
@@ -29,6 +37,17 @@ type Server struct {
 func New(cfg Config) *Server {
     if len(cfg.AllowedOrigins) == 0 {
         cfg.AllowedOrigins = []string{"*"}
+    }
+
+    // Set default rate limit values
+    if cfg.RequestsPerSecond <= 0 {
+        cfg.RequestsPerSecond = parseFloat(getEnvWithDefault("RATE_LIMIT_RPS", "10"), 10.0)
+    }
+    if cfg.BurstSize <= 0 {
+        cfg.BurstSize = parseInt(getEnvWithDefault("RATE_LIMIT_BURST", "20"), 20)
+    }
+    if !cfg.RateLimitEnabled {
+        cfg.RateLimitEnabled = getEnvWithDefault("RATE_LIMIT_ENABLED", "true") == "true"
     }
 
     // Initialize database
@@ -51,7 +70,19 @@ func New(cfg Config) *Server {
 
 // Handler returns the root HTTP handler for the server.
 func (s *Server) Handler() http.Handler {
-    return s.router
+    handler := http.Handler(s.router)
+    
+    // Apply rate limiting if enabled
+    if s.cfg.RateLimitEnabled {
+        rateLimiter := middleware.SimpleRateLimit(
+            rate.Limit(s.cfg.RequestsPerSecond),
+            s.cfg.BurstSize,
+        )
+        handler = rateLimiter(handler)
+        log.Printf("Rate limiting enabled: %.1f requests/sec, burst: %d", s.cfg.RequestsPerSecond, s.cfg.BurstSize)
+    }
+    
+    return handler
 }
 
 // Start bootstraps the HTTP server on the provided address and blocks until it exits.
@@ -74,6 +105,7 @@ func (s *Server) registerRoutes() {
     // Health check and general endpoints
     s.router.HandleFunc("/", s.generalHandler.HealthCheck).Methods("GET")
     s.router.HandleFunc("/api/categories", s.generalHandler.GetCategories).Methods("GET")
+    s.router.HandleFunc("/api/system/info", s.generalHandler.GetSystemInfo).Methods("GET")
     
     // Expense management endpoints
     s.router.HandleFunc("/api/expenses", s.expenseHandler.CreateExpense).Methods("POST")
@@ -126,4 +158,26 @@ func (s *Server) allowedOrigin(origin string) string {
     }
 
     return ""
+}
+
+// Helper functions for environment variable parsing
+func getEnvWithDefault(key, defaultValue string) string {
+    if value := strings.TrimSpace(os.Getenv(key)); value != "" {
+        return value
+    }
+    return defaultValue
+}
+
+func parseFloat(s string, defaultValue float64) float64 {
+    if val, err := strconv.ParseFloat(s, 64); err == nil {
+        return val
+    }
+    return defaultValue
+}
+
+func parseInt(s string, defaultValue int) int {
+    if val, err := strconv.Atoi(s); err == nil {
+        return val
+    }
+    return defaultValue
 }

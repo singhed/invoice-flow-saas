@@ -27,6 +27,7 @@ type Attachment struct {
     ContentType string    `json:"content_type"`
     FileSize    int64     `json:"file_size"`
     UploadedAt  time.Time `json:"uploaded_at"`
+    StorageType string    `json:"storage_type" gorm:"default:'local'"`
 }
 
 // AISuggestion represents AI-generated suggestions for an expense
