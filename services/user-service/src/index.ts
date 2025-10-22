@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import hpp from 'hpp';
@@ -12,6 +12,7 @@ import Joi from 'joi';
 import xss from 'xss';
 import { logger, AppError, ValidationError, ConflictError, UnauthorizedError } from '@invoice-saas/shared';
 import dotenv from 'dotenv';
+import { isPasswordCompromised, getPasswordStrengthScore } from './security-utils';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ const app = express();
 const PORT = process.env.PORT || 3003;
 const ACCESS_TOKEN_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || ACCESS_TOKEN_SECRET;
+const PASSWORD_PEPPER = process.env.PASSWORD_PEPPER || '';
 
 app.disable('x-powered-by');
 app.use(helmet());
@@ -53,9 +55,23 @@ interface User {
   passwordHash: string;
   role: string;
   createdAt: string;
+  failedLoginAttempts?: number;
+  accountLockedUntil?: number;
 }
 
 const users = new Map<string, User>(); // key by email lowercased
+
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_DURATION = 30 * 60 * 1000;
+const BCRYPT_ROUNDS = 12;
+
+function pepperPassword(password: string): string {
+  if (!PASSWORD_PEPPER) {
+    return password;
+  }
+  const crypto = require('crypto');
+  return crypto.createHmac('sha256', PASSWORD_PEPPER).update(password).digest('hex');
+}
 
 // In-memory refresh token store (rotation, revocation)
 interface RefreshRecord { userId: string; revoked: boolean; expiresAt: number; replacedBy?: string }
@@ -75,7 +91,7 @@ function signRefreshToken(user: User) {
   return { token, jti };
 }
 
-function setRefreshCookie(res: express.Response, token: string) {
+function setRefreshCookie(res: Response, token: string) {
   res.cookie('rt', token, {
     httpOnly: true,
     sameSite: 'lax',
@@ -122,11 +138,11 @@ app.get('/auth/csrf-token', csrfProtection, (req, res) => {
 const registerSchema = Joi.object({
   email: Joi.string().email({ tlds: { allow: false } }).max(254).required(),
   password: Joi.string()
-    .min(8)
+    .min(12)
     .max(128)
-    .pattern(/^(?=.*[A-Za-z])(?=.*\d).+$/)
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&].+$/)
     .required()
-    .messages({ 'string.pattern.base': 'Password must include letters and numbers' }),
+    .messages({ 'string.pattern.base': 'Password must include uppercase, lowercase, numbers, and special characters' }),
   name: Joi.string().max(100).allow('', null),
 });
 
@@ -136,7 +152,7 @@ const loginSchema = Joi.object({
 });
 
 function validateBody(schema: Joi.ObjectSchema) {
-  return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     const { error, value } = schema.validate(req.body, { abortEarly: false, stripUnknown: true });
     if (error) {
       return next(new ValidationError(error.details.map((d) => d.message).join(', ')));
@@ -156,7 +172,7 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'healthy', service: 'user-service', timestamp: new Date().toISOString() });
 });
 
-app.post('/auth/register', authLimiter, csrfProtection, validateBody(registerSchema), async (req, res, next) => {
+app.post('/auth/register', authLimiter, csrfProtection, validateBody(registerSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password, name } = (req as any).validatedBody as { email: string; password: string; name?: string };
 
@@ -165,7 +181,17 @@ app.post('/auth/register', authLimiter, csrfProtection, validateBody(registerSch
       throw new ConflictError('User already exists');
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    if (isPasswordCompromised(password)) {
+      throw new ValidationError('Password is too common or follows a predictable pattern. Please choose a stronger password');
+    }
+
+    const strengthScore = getPasswordStrengthScore(password);
+    if (strengthScore < 5) {
+      throw new ValidationError('Password is too weak. Please use a mix of uppercase, lowercase, numbers, and special characters');
+    }
+
+    const pepperedPassword = pepperPassword(password);
+    const passwordHash = await bcrypt.hash(pepperedPassword, BCRYPT_ROUNDS);
     const user: User = {
       id: uuidv4(),
       email: normalizedEmail,
@@ -173,6 +199,8 @@ app.post('/auth/register', authLimiter, csrfProtection, validateBody(registerSch
       passwordHash,
       role: 'user',
       createdAt: new Date().toISOString(),
+      failedLoginAttempts: 0,
+      accountLockedUntil: 0,
     };
 
     users.set(normalizedEmail, user);
@@ -197,7 +225,7 @@ app.post('/auth/register', authLimiter, csrfProtection, validateBody(registerSch
   }
 });
 
-app.post('/auth/login', authLimiter, csrfProtection, validateBody(loginSchema), async (req, res, next) => {
+app.post('/auth/login', authLimiter, csrfProtection, validateBody(loginSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password } = (req as any).validatedBody as { email: string; password: string };
 
@@ -205,13 +233,32 @@ app.post('/auth/login', authLimiter, csrfProtection, validateBody(loginSchema), 
     const user = users.get(normalizedEmail);
 
     if (!user) {
+      const pepperedPassword = pepperPassword(password);
+      await bcrypt.hash(pepperedPassword, BCRYPT_ROUNDS);
       throw new UnauthorizedError('Invalid credentials');
     }
 
-    const passwordOk = await bcrypt.compare(password, user.passwordHash);
+    if (user.accountLockedUntil && user.accountLockedUntil > Date.now()) {
+      const minutesLeft = Math.ceil((user.accountLockedUntil - Date.now()) / 60000);
+      throw new UnauthorizedError(`Account locked. Try again in ${minutesLeft} minutes`);
+    }
+
+    const pepperedPassword = pepperPassword(password);
+    const passwordOk = await bcrypt.compare(pepperedPassword, user.passwordHash);
     if (!passwordOk) {
+      user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+      
+      if (user.failedLoginAttempts >= MAX_FAILED_ATTEMPTS) {
+        user.accountLockedUntil = Date.now() + LOCKOUT_DURATION;
+        user.failedLoginAttempts = 0;
+        throw new UnauthorizedError(`Too many failed attempts. Account locked for 30 minutes`);
+      }
+      
       throw new UnauthorizedError('Invalid credentials');
     }
+
+    user.failedLoginAttempts = 0;
+    user.accountLockedUntil = 0;
 
     const accessToken = signAccessToken(user);
     const { token: refreshToken } = signRefreshToken(user);
@@ -234,7 +281,7 @@ app.post('/auth/login', authLimiter, csrfProtection, validateBody(loginSchema), 
 });
 
 // Authenticated endpoint to fetch current user
-function authGuard(req: express.Request, res: express.Response, next: express.NextFunction) {
+function authGuard(req: Request, _res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return next(new UnauthorizedError('No token provided'));
@@ -251,7 +298,15 @@ function authGuard(req: express.Request, res: express.Response, next: express.Ne
   }
 }
 
-app.get('/auth/me', authGuard, (req, res) => {
+function adminGuard(req: Request, _res: Response, next: NextFunction) {
+  const user = (req as any).user as { id: string; email: string; role: string };
+  if (user.role !== 'admin') {
+    return next(new UnauthorizedError('Admin access required'));
+  }
+  return next();
+}
+
+app.get('/auth/me', authGuard, (req: Request, res: Response) => {
   const decoded = (req as any).user as { id: string; email: string; role: string };
   const user = users.get(decoded.email.toLowerCase());
   if (!user) {
@@ -272,7 +327,7 @@ app.get('/auth/me', authGuard, (req, res) => {
 });
 
 // Refresh access token using refresh token cookie (rotation)
-app.post('/auth/refresh', authLimiter, csrfProtection, (req, res, next) => {
+app.post('/auth/refresh', authLimiter, csrfProtection, (req: Request, res: Response, next: NextFunction) => {
   try {
     const token = (req.cookies || {})['rt'];
     if (!token) {
@@ -317,7 +372,7 @@ app.post('/auth/refresh', authLimiter, csrfProtection, (req, res, next) => {
 });
 
 // Logout: revoke refresh token and clear cookie
-app.post('/auth/logout', authLimiter, csrfProtection, (req, res) => {
+app.post('/auth/logout', authLimiter, csrfProtection, (req: Request, res: Response) => {
   const token = (req.cookies || {})['rt'];
   if (token) {
     try {
@@ -335,8 +390,49 @@ app.post('/auth/logout', authLimiter, csrfProtection, (req, res) => {
   res.status(200).json({ status: 'success' });
 });
 
+app.get('/auth/security-audit', authGuard, adminGuard, (_req: Request, res: Response) => {
+  const lockedAccounts: Array<{ email: string; lockedUntil: string; failedAttempts: number }> = [];
+  const totalUsers = users.size;
+  let accountsWithFailedAttempts = 0;
+  
+  for (const [email, user] of users.entries()) {
+    if (user.accountLockedUntil && user.accountLockedUntil > Date.now()) {
+      lockedAccounts.push({
+        email,
+        lockedUntil: new Date(user.accountLockedUntil).toISOString(),
+        failedAttempts: user.failedLoginAttempts || 0,
+      });
+    }
+    
+    if ((user.failedLoginAttempts || 0) > 0) {
+      accountsWithFailedAttempts++;
+    }
+  }
+  
+  const activeRefreshTokens = Array.from(refreshStore.values()).filter(
+    (record) => !record.revoked && record.expiresAt > Date.now()
+  ).length;
+  
+  res.status(200).json({
+    status: 'success',
+    audit: {
+      totalUsers,
+      lockedAccounts: lockedAccounts.length,
+      accountsWithFailedAttempts,
+      activeRefreshTokens,
+      lockedAccountDetails: lockedAccounts,
+      securityConfig: {
+        bcryptRounds: BCRYPT_ROUNDS,
+        maxFailedAttempts: MAX_FAILED_ATTEMPTS,
+        lockoutDurationMinutes: LOCKOUT_DURATION / 60000,
+        passwordPepperEnabled: !!PASSWORD_PEPPER,
+      },
+    },
+  });
+});
+
 // Centralized error handler
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   if (err.code === 'EBADCSRFTOKEN') {
     logger.warn('Invalid CSRF token');
     return res.status(403).json({ status: 'error', message: 'Invalid CSRF token' });
