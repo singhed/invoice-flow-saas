@@ -13,7 +13,7 @@ A complete, production-ready invoice management SaaS application built with micr
 - ✅ **Invoice Management**: Create, read, update, delete invoices
 - ✅ **PDF Generation**: Automatic PDF creation and S3 storage
 - ✅ **Payment Processing**: Stripe integration with webhook handling
-- ✅ **Email Notifications**: Automated invoice delivery via SendGrid/SES
+- ✅ **Email Notifications**: Personalized AWS SES gratitude emails with Shopify order context
 - ✅ **User Authentication**: JWT-based auth with RBAC
 - ✅ **Real-time Updates**: WebSocket support for status changes
 - ✅ **Search & Filtering**: Advanced invoice search capabilities
@@ -68,6 +68,28 @@ Frontend (Render) → ALB → API Gateway → Microservices (EKS)
 ```
 
 **Detailed Architecture**: See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+
+## 💌 Invoice Email Flow
+
+```mermaid
+sequenceDiagram
+    participant Shopify as Shopify Store
+    participant InvoiceSvc as Invoice Service
+    participant SES as AWS SES
+    participant Customer as Customer Inbox
+    Shopify->>InvoiceSvc: Order paid webhook (orderId)
+    InvoiceSvc->>Shopify: Fetch order JSON
+    InvoiceSvc->>InvoiceSvc: Generate PDF + gratitude email
+    InvoiceSvc->>SES: SendRawEmail (invoice.pdf)
+    SES->>Customer: Deliver thankful message
+```
+
+The invoice service now pulls Shopify order data, renders a polished PDF, and delivers a gratitude-rich email via AWS SES. You can reuse the Mermaid diagram above by calling `GET /invoices/email/diagram`.
+
+> 📎 **Resources**
+> - [Service deep dive](docs/services/invoice-service.md)
+> - [Sample invoice PDF](docs/assets/sample-invoice.pdf)
+> - [Sample invoice image](docs/assets/sample-invoice.png)
 
 ## 🛠️ Technology Stack
 

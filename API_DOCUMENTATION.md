@@ -7,6 +7,39 @@ http://localhost:8000
 
 ## Endpoints
 
+### Invoice Emails
+
+#### POST `/invoices/email`
+Trigger invoice generation and send a gratitude-rich email with a PDF attachment via AWS SES.
+
+**Request Body:**
+```json
+{
+  "orderId": "5342193849132",
+  "recipientEmail": "optional.override@example.com",
+  "personalMessage": "We’re cheering for your Shopify journey!"
+}
+```
+
+**Response:** `202 Accepted`
+```json
+{
+  "status": "success",
+  "message": "Invoice email sent via AWS SES",
+  "recipientEmail": "merchant@example.com"
+}
+```
+
+#### GET `/invoices/email/diagram`
+Returns the Mermaid sequence diagram used in documentation for the invoice email workflow.
+
+**Response:** `200 OK`
+```json
+{
+  "diagram": "sequenceDiagram..."
+}
+```
+
 ### Health Check
 
 #### GET `/`
