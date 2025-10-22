@@ -3,9 +3,13 @@
 import { useState } from "react";
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { env } from "@/env";
+import { useToast } from "@/hooks/useToast";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
+  const router = useRouter();
+  const { toast } = useToast();
   const [user, setUser] = useState<any>(() => {
     if (typeof window !== "undefined") {
       try {
@@ -17,8 +21,7 @@ export default function ProfilePage() {
     }
     return null;
   });
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const API_BASE = env.NEXT_PUBLIC_AUTH_API_URL || env.NEXT_PUBLIC_API_URL;
 
@@ -33,12 +36,14 @@ export default function ProfilePage() {
   }
 
   async function fetchMe() {
-    setError(null);
-    setMessage(null);
+    setLoading(true);
     try {
       const token = typeof window !== "undefined" ? window.localStorage.getItem("auth_token") : null;
       if (!token) {
-        setError("Not signed in. Please login.");
+        toast({
+          message: "Not signed in. Please login.",
+          variant: "error",
+        });
         return;
       }
       const res = await fetch(`${API_BASE}/api/auth/me`, {
@@ -46,20 +51,28 @@ export default function ProfilePage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data?.message || data?.detail || `Failed to load profile (${res.status})`);
+        throw new Error(data?.message || data?.detail || "Failed to load profile");
       }
       setUser(data.user);
       if (typeof window !== "undefined") {
         window.localStorage.setItem("auth_user", JSON.stringify(data.user));
       }
+      toast({
+        message: "Profile refreshed successfully",
+        variant: "success",
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load profile");
+      toast({
+        message: err instanceof Error ? err.message : "Failed to load profile",
+        variant: "error",
+      });
+    } finally {
+      setLoading(false);
     }
   }
 
   async function handleRefreshAccess() {
-    setError(null);
-    setMessage(null);
+    setLoading(true);
     try {
       const token = await fetchCsrfToken();
       const headers: Record<string, string> = {};
@@ -71,20 +84,27 @@ export default function ProfilePage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data?.message || data?.detail || `Failed to refresh token (${res.status})`);
+        throw new Error(data?.message || data?.detail || "Failed to refresh token");
       }
       if (data?.token && typeof window !== "undefined") {
         window.localStorage.setItem("auth_token", data.token);
-        setMessage("Access token refreshed.");
       }
+      toast({
+        message: "Access token refreshed successfully",
+        variant: "success",
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to refresh token");
+      toast({
+        message: err instanceof Error ? err.message : "Failed to refresh token",
+        variant: "error",
+      });
+    } finally {
+      setLoading(false);
     }
   }
 
   async function handleLogout() {
-    setError(null);
-    setMessage(null);
+    setLoading(true);
     try {
       const token = await fetchCsrfToken();
       const headers: Record<string, string> = {};
@@ -102,7 +122,13 @@ export default function ProfilePage() {
       window.localStorage.removeItem("auth_user");
     }
     setUser(null);
-    setMessage("Signed out.");
+    toast({
+      message: "You've been signed out successfully",
+      variant: "success",
+    });
+    setTimeout(() => {
+      router.push("/auth/login");
+    }, 1000);
   }
 
   return (
@@ -112,17 +138,6 @@ export default function ProfilePage() {
           <CardTitle>Your Profile</CardTitle>
         </CardHeader>
         <CardContent>
-          {error && (
-            <div className="mb-4 rounded-md border border-red-400/30 bg-red-900/10 p-3 text-sm text-red-300">
-              {error}
-            </div>
-          )}
-          {message && (
-            <div className="mb-4 rounded-md border border-border/60 bg-card/50 p-3 text-sm text-foreground">
-              {message}
-            </div>
-          )}
-
           {!user ? (
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">You are not signed in.</p>
@@ -137,19 +152,35 @@ export default function ProfilePage() {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="rounded-md border border-border/60 bg-card/50 p-4">
-                <div className="text-sm"><span className="text-muted-foreground">ID:</span> {user.id}</div>
-                <div className="text-sm"><span className="text-muted-foreground">Email:</span> {user.email}</div>
+              <div className="rounded-md border border-border/60 bg-card/50 p-4 space-y-2">
+                <div className="text-sm">
+                  <span className="text-muted-foreground">ID:</span> <span className="ml-2 font-mono">{user.id}</span>
+                </div>
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Email:</span> <span className="ml-2">{user.email}</span>
+                </div>
                 {user.name && (
-                  <div className="text-sm"><span className="text-muted-foreground">Name:</span> {user.name}</div>
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Name:</span> <span className="ml-2">{user.name}</span>
+                  </div>
                 )}
-                <div className="text-sm"><span className="text-muted-foreground">Role:</span> {user.role}</div>
-                <div className="text-sm"><span className="text-muted-foreground">Created:</span> {user.createdAt}</div>
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Role:</span> <span className="ml-2 capitalize">{user.role}</span>
+                </div>
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Created:</span> <span className="ml-2">{user.createdAt}</span>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Button onClick={fetchMe} variant="outline">Refresh profile</Button>
-                <Button onClick={handleRefreshAccess} variant="secondary">Refresh access token</Button>
-                <Button onClick={handleLogout} variant="danger">Sign out</Button>
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={fetchMe} variant="outline" size="sm" disabled={loading}>
+                  {loading ? "Loading..." : "Refresh profile"}
+                </Button>
+                <Button onClick={handleRefreshAccess} variant="secondary" size="sm" disabled={loading}>
+                  {loading ? "Loading..." : "Refresh token"}
+                </Button>
+                <Button onClick={handleLogout} variant="danger" size="sm" disabled={loading}>
+                  {loading ? "Signing out..." : "Sign out"}
+                </Button>
               </div>
             </div>
           )}
