@@ -79,3 +79,18 @@ temp/
 
 # Local development
 localstack_data/
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+go.work.sum
+
+# Go API specific
+apps/api/expenses.db
+apps/api/uploads/
