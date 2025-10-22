@@ -116,7 +116,7 @@ You can download the PDF version [here](../assets/sample-invoice.pdf).
   </tr>
 </table>
 
-All previews are available in the repository under `docs/assets/`.
+All previews are available in the repository under `docs/assets/`, including 100 richly styled device variations for product and marketing teams.
 
 ## Email Tone & Template
 

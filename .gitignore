@@ -79,6 +79,7 @@ temp/
 
 # Local development
 localstack_data/
+.venv-tools/
 
 # Go
 *.exe
