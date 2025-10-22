@@ -4,7 +4,7 @@ This repository defines a Google-scale, cloud-native, multi-region platform engi
 
 - Clients: Web (Next.js), Admin Console (Next.js), Public APIs (REST/GraphQL/gRPC), and Internal tooling.
 - Edge: CDN + WAF + API Gateway for global routing, TLS termination, authn/z, quotas, and request shaping.
-- Services: Independently-scalable NestJS microservices: Auth, User, Search, Notification, Analytics, Storage, plus API Gateway as the ingress/control plane for public APIs.
+- Services: Independently-scalable NestJS microservices: Auth, User, Invoice, Search, Notification, Analytics, Storage, plus API Gateway as the ingress/control plane for public APIs.
 - Data: PostgreSQL (OLTP; sharded/partitioned), Redis (caching + rate limits + queues where needed), Elasticsearch (search/indexing), S3/GCS (object storage), RabbitMQ (asynchronous messaging and fanout), Time-series/OLAP (BigQuery/Snowflake or ClickHouse optional for analytics-at-scale).
 - Platform: Kubernetes (EKS/GKE) for orchestration, HashiCorp Terraform for IaC, GitHub Actions for CI/CD, service mesh (Istio/Linkerd) for mTLS and traffic policy, OPA/Gatekeeper for policy, Prometheus/Grafana for metrics, OpenTelemetry for tracing, Loki/CloudWatch/Cloud Logging for logs.
 - Reliability: Multi-AZ active-active, optional multi-region with RPO ~0 and RTO minutes via logical replication, stateless services with graceful degradation, bulkheading, circuit breakers, and backpressure.
@@ -92,6 +92,7 @@ This monorepo is organized to minimize coupling, maximize reuse, and enable high
   - api-gateway/
   - auth-service/
   - user-service/
+  - invoice-service/
   - search-service/
   - notification-service/
   - analytics-service/

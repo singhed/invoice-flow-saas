@@ -17,27 +17,37 @@
     "prisma:generate": "prisma generate"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.470.0",
+    "@aws-sdk/client-ses": "^3.470.0",
+    "@aws-sdk/client-sqs": "^3.470.0",
     "@invoice-saas/shared": "workspace:*",
     "@prisma/client": "^5.7.0",
+    "axios": "^1.6.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "joi": "^17.11.0",
-    "puppeteer": "^21.6.1",
-    "pdfkit": "^0.14.0",
-    "@aws-sdk/client-s3": "^3.470.0",
-    "@aws-sdk/client-sqs": "^3.470.0",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "hpp": "^0.2.3",
     "ioredis": "^5.3.2",
-    "dotenv": "^16.3.1"
+    "joi": "^17.11.0",
+    "pdfkit": "^0.14.0",
+    "puppeteer": "^21.6.1"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
-    "@types/pdfkit": "^0.13.4",
+    "@types/hpp": "^0.2.2",
     "@types/jest": "^29.5.10",
+    "@types/node": "^20.12.7",
+    "@types/pdfkit": "^0.13.4",
+    "@types/supertest": "^6.0.1",
     "jest": "^29.7.0",
     "prisma": "^5.7.0",
     "supertest": "^6.3.3",
-    "@types/supertest": "^6.0.1",
-    "ts-node-dev": "^2.0.0",
     "ts-jest": "^29.1.1",
+    "ts-node-dev": "^2.0.0",
     "typescript": "^5.3.2"
   }
 }
+
