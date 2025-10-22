@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { getExpenses, ApiClientError } from "@/lib/api";
+import { getExpenses, ApiClientError, type Expense as ApiExpense } from "@/lib/api";
 import {
   Card,
   CardContent,
@@ -16,17 +16,12 @@ import {
   DropdownMenuSeparator,
   EmptyState,
   SkeletonCard,
+  Breadcrumb,
 } from "@/components/ui";
 import { createTranslator } from "@/i18n";
 import { useToast } from "@/hooks/useToast";
 
-type Expense = {
-  id: string;
-  description: string;
-  amount: number;
-  date: string;
-  category?: string;
-  client_notes?: string;
+type Expense = ApiExpense & {
   status?: "paid" | "pending" | "overdue";
 };
 
@@ -124,7 +119,7 @@ export default function InvoicesPage() {
     return filteredAndSortedExpenses.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredAndSortedExpenses, currentPage, itemsPerPage]);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (_id: number) => {
     toast({
       title: "Invoice deleted",
       message: "The invoice has been successfully deleted.",
@@ -133,14 +128,14 @@ export default function InvoicesPage() {
     // In a real app, you would make an API call here
   };
 
-  const handleEdit = (id: string) => {
+  const handleEdit = (_id: number) => {
     toast({
       message: "Edit functionality coming soon!",
       variant: "info",
     });
   };
 
-  const handleView = (id: string) => {
+  const handleView = (_id: number) => {
     toast({
       message: "Invoice details coming soon!",
       variant: "info",
@@ -150,6 +145,7 @@ export default function InvoicesPage() {
   if (loading) {
     return (
       <div className="space-y-6">
+        <Breadcrumb items={[{ label: "Invoices" }]} className="mb-4" />
         <div>
           <h1 className="mb-2 text-4xl font-bold">{t("invoices.title")}</h1>
           <p className="text-muted-foreground">{t("invoices.subtitle")}</p>
@@ -166,6 +162,7 @@ export default function InvoicesPage() {
   if (error) {
     return (
       <div className="space-y-6">
+        <Breadcrumb items={[{ label: "Invoices" }]} className="mb-4" />
         <div>
           <h1 className="mb-2 text-4xl font-bold">{t("invoices.title")}</h1>
           <p className="text-muted-foreground">{t("invoices.subtitle")}</p>
@@ -191,6 +188,7 @@ export default function InvoicesPage() {
   if (!expenses || expenses.length === 0) {
     return (
       <div className="space-y-6">
+        <Breadcrumb items={[{ label: "Invoices" }]} className="mb-4" />
         <div>
           <h1 className="mb-2 text-4xl font-bold">{t("invoices.title")}</h1>
           <p className="text-muted-foreground">{t("invoices.subtitle")}</p>
@@ -219,6 +217,9 @@ export default function InvoicesPage() {
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumb Navigation */}
+      <Breadcrumb items={[{ label: "Invoices" }]} />
+      
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>

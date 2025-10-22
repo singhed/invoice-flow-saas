@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from "@/components/ui";
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Breadcrumb } from "@/components/ui";
 import { env } from "@/env";
 import { useToast } from "@/hooks/useToast";
 import Link from "next/link";
@@ -102,7 +102,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md">
+    <div className="mx-auto max-w-md space-y-6">
+      <Breadcrumb items={[{ label: "Authentication", href: "/auth/login" }, { label: "Sign in" }]} />
       <Card>
         <CardHeader>
           <CardTitle>Sign in</CardTitle>

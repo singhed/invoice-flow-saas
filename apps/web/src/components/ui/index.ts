@@ -9,3 +9,4 @@ export * from "./Badge";
 export * from "./DropdownMenu";
 export * from "./SearchInput";
 export * from "./Pagination";
+export * from "./Breadcrumb";

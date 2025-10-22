@@ -8,10 +8,11 @@ import { ThemeToggle } from "./theme-toggle";
 import { createTranslator } from "@/i18n";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { cn } from "@/lib/utils";
+import { User, LogOut, Settings, FileText } from "lucide-react";
 
 export function Navbar() {
   const appName = env.NEXT_PUBLIC_APP_NAME;
-  const [locale, setLocale] = useState("en");
+  const [locale, setLocale] = useState<"en" | "es" | "zh">("en");
   const t = createTranslator(locale);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -23,16 +24,29 @@ export function Navbar() {
       setIsAuthenticated(!!token);
       
       // Get locale from cookie
-      const cookies = document.cookie.split(";").reduce((acc, cookie) => {
+      const cookies = document.cookie.split(";").reduce<Record<string, string>>((acc, cookie) => {
         const [key, value] = cookie.trim().split("=");
-        acc[key] = value;
+        if (key && value) {
+          acc[key] = value;
+        }
         return acc;
-      }, {} as Record<string, string>);
-      setLocale(cookies.locale || "en");
+      }, {});
+      const cookieLocale = cookies.locale;
+      if (cookieLocale === "en" || cookieLocale === "es" || cookieLocale === "zh") {
+        setLocale(cookieLocale);
+      }
     }
   }, []);
 
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  const handleLogout = () => {
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("auth_token");
+      window.location.href = "/";
+    }
+  };
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -55,42 +69,82 @@ export function Navbar() {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden items-center gap-6 lg:flex">
-            <Link href="/" className="text-sm text-muted-foreground transition-colors hover:text-primary">
-              {t("navbar.home")}
-            </Link>
-            <Link
-              href="/invoices"
-              className="text-sm text-muted-foreground transition-colors hover:text-primary"
-            >
-              {t("navbar.invoices")}
-            </Link>
-            <a
-              className="text-sm text-muted-foreground transition-colors hover:text-primary"
-              href="https://nextjs.org/docs"
-              target="_blank"
-              rel="noreferrer noopener"
-            >
-              {t("navbar.docs")}
-            </a>
+          <div className="hidden items-center gap-1 lg:flex">
+            {/* Primary Navigation */}
+            <div className="flex items-center gap-1 mr-4 border-r border-border pr-4">
+              <NavLink href="/">{t("navbar.home")}</NavLink>
+              {isAuthenticated && (
+                <NavLink href="/invoices">
+                  <FileText className="mr-1.5 h-4 w-4" />
+                  {t("navbar.invoices")}
+                </NavLink>
+              )}
+              <a
+                className="flex items-center rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                href="https://nextjs.org/docs"
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                {t("navbar.docs")}
+              </a>
+            </div>
             
-            {isAuthenticated ? (
-              <Link href="/profile" className="text-sm text-muted-foreground transition-colors hover:text-primary">
-                Profile
-              </Link>
-            ) : (
-              <>
-                <Link href="/auth/login" className="text-sm text-muted-foreground transition-colors hover:text-primary">
-                  Sign in
-                </Link>
-                <Link href="/auth/register">
-                  <Button size="sm" variant="primary">Create account</Button>
-                </Link>
-              </>
-            )}
-            
-            <LanguageSwitcher />
-            <ThemeToggle />
+            {/* Secondary Actions */}
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <LanguageSwitcher />
+              
+              {isAuthenticated ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+                    aria-label="User menu"
+                    aria-expanded={userMenuOpen}
+                  >
+                    <User className="h-4 w-4" />
+                    <span className="hidden md:inline">Account</span>
+                  </button>
+                  
+                  {userMenuOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setUserMenuOpen(false)}
+                      />
+                      <div className="absolute right-0 mt-2 w-48 z-50 rounded-md border border-border bg-popover shadow-lg">
+                        <div className="p-1">
+                          <Link
+                            href="/profile"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-2 rounded-sm px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                          >
+                            <Settings className="h-4 w-4" />
+                            Profile Settings
+                          </Link>
+                          <button
+                            onClick={handleLogout}
+                            className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                          >
+                            <LogOut className="h-4 w-4" />
+                            Sign Out
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Link href="/auth/login">
+                    <Button size="sm" variant="ghost">Sign in</Button>
+                  </Link>
+                  <Link href="/auth/register">
+                    <Button size="sm" variant="primary">Get started</Button>
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Mobile menu button */}
@@ -119,16 +173,22 @@ export function Navbar() {
         <div
           className={cn(
             "overflow-hidden transition-all duration-300 ease-in-out lg:hidden",
-            mobileMenuOpen ? "max-h-96 pb-4" : "max-h-0"
+            mobileMenuOpen ? "max-h-[32rem] pb-4" : "max-h-0"
           )}
         >
           <div className="space-y-1 pt-2">
+            <div className="mb-2 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Navigation
+            </div>
             <MobileNavLink href="/" onClick={() => setMobileMenuOpen(false)}>
               {t("navbar.home")}
             </MobileNavLink>
-            <MobileNavLink href="/invoices" onClick={() => setMobileMenuOpen(false)}>
-              {t("navbar.invoices")}
-            </MobileNavLink>
+            {isAuthenticated && (
+              <MobileNavLink href="/invoices" onClick={() => setMobileMenuOpen(false)}>
+                <FileText className="mr-2 h-4 w-4" />
+                {t("navbar.invoices")}
+              </MobileNavLink>
+            )}
             <MobileNavLink
               href="https://nextjs.org/docs"
               onClick={() => setMobileMenuOpen(false)}
@@ -138,29 +198,67 @@ export function Navbar() {
             </MobileNavLink>
             
             <div className="border-t border-border my-2 pt-2">
+              <div className="mb-2 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Account
+              </div>
               {isAuthenticated ? (
-                <MobileNavLink href="/profile" onClick={() => setMobileMenuOpen(false)}>
-                  Profile
-                </MobileNavLink>
+                <>
+                  <MobileNavLink href="/profile" onClick={() => setMobileMenuOpen(false)}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Profile Settings
+                  </MobileNavLink>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex w-full items-center rounded-md px-3 py-2 text-base text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </button>
+                </>
               ) : (
                 <>
                   <MobileNavLink href="/auth/login" onClick={() => setMobileMenuOpen(false)}>
                     Sign in
                   </MobileNavLink>
                   <MobileNavLink href="/auth/register" onClick={() => setMobileMenuOpen(false)}>
-                    Create account
+                    <span className="font-medium">Get started</span>
                   </MobileNavLink>
                 </>
               )}
             </div>
 
-            <div className="pt-2">
-              <LanguageSwitcher />
+            <div className="border-t border-border pt-2">
+              <div className="mb-2 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Preferences
+              </div>
+              <div className="px-3 py-2">
+                <LanguageSwitcher />
+              </div>
             </div>
           </div>
         </div>
       </div>
     </nav>
+  );
+}
+
+function NavLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+    >
+      {children}
+    </Link>
   );
 }
 

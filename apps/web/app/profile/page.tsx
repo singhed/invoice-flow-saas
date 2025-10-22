@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import { Button, Card, CardContent, CardHeader, CardTitle, Breadcrumb } from "@/components/ui";
 import { env } from "@/env";
 import { useToast } from "@/hooks/useToast";
 import Link from "next/link";
@@ -132,7 +132,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg">
+    <div className="mx-auto max-w-lg space-y-6">
+      <Breadcrumb items={[{ label: "Profile" }]} />
       <Card>
         <CardHeader>
           <CardTitle>Your Profile</CardTitle>

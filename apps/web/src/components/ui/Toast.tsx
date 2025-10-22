@@ -102,6 +102,7 @@ export function Toast({
       }, duration);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [id, duration, onClose]);
 
   return (

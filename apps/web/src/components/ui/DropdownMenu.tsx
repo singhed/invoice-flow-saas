@@ -24,6 +24,7 @@ export function DropdownMenu({ trigger, children, align = "right" }: DropdownMen
       document.addEventListener("mousedown", handleClickOutside);
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
+    return undefined;
   }, [isOpen]);
 
   useEffect(() => {
@@ -37,6 +38,7 @@ export function DropdownMenu({ trigger, children, align = "right" }: DropdownMen
       document.addEventListener("keydown", handleEscape);
       return () => document.removeEventListener("keydown", handleEscape);
     }
+    return undefined;
   }, [isOpen]);
 
   return (

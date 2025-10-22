@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Badge } from "@/components/ui";
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Badge, Breadcrumb } from "@/components/ui";
 import { env } from "@/env";
 import { useToast } from "@/hooks/useToast";
 import Link from "next/link";
@@ -121,7 +121,8 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md">
+    <div className="mx-auto max-w-md space-y-6">
+      <Breadcrumb items={[{ label: "Authentication", href: "/auth/login" }, { label: "Sign up" }]} />
       <Card>
         <CardHeader>
           <CardTitle>Create an account</CardTitle>
