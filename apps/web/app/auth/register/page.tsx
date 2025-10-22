@@ -1,7 +1,17 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Badge } from "@/components/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Input,
+  Badge,
+  Breadcrumb,
+} from "@/components/ui";
 import { env } from "@/env";
 import { useToast } from "@/hooks/useToast";
 import Link from "next/link";
@@ -28,16 +38,20 @@ export default function RegisterPage() {
     }
   }
 
-  function getPasswordStrength(password: string): { strength: number; label: string; variant: "error" | "warning" | "info" | "success" } {
+  function getPasswordStrength(password: string): {
+    strength: number;
+    label: string;
+    variant: "error" | "warning" | "info" | "success";
+  } {
     if (password.length === 0) return { strength: 0, label: "Enter password", variant: "info" };
     if (password.length < 8) return { strength: 1, label: "Too short", variant: "error" };
-    
+
     let strength = 0;
     if (password.length >= 12) strength++;
     if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
     if (/\d/.test(password)) strength++;
     if (/[^a-zA-Z0-9]/.test(password)) strength++;
-    
+
     if (strength === 0 || strength === 1) return { strength: 1, label: "Weak", variant: "error" };
     if (strength === 2) return { strength: 2, label: "Fair", variant: "warning" };
     if (strength === 3) return { strength: 3, label: "Good", variant: "info" };
@@ -67,7 +81,7 @@ export default function RegisterPage() {
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -121,7 +135,10 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md">
+    <div className="mx-auto max-w-md space-y-6">
+      <Breadcrumb
+        items={[{ label: "Authentication", href: "/auth/login" }, { label: "Sign up" }]}
+      />
       <Card>
         <CardHeader>
           <CardTitle>Create an account</CardTitle>
@@ -193,7 +210,7 @@ export default function RegisterPage() {
                   </svg>
                 }
               />
-              
+
               {password && (
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex-1">
@@ -203,10 +220,10 @@ export default function RegisterPage() {
                           passwordStrength.variant === "error"
                             ? "bg-red-500"
                             : passwordStrength.variant === "warning"
-                            ? "bg-yellow-500"
-                            : passwordStrength.variant === "info"
-                            ? "bg-blue-500"
-                            : "bg-green-500"
+                              ? "bg-yellow-500"
+                              : passwordStrength.variant === "info"
+                                ? "bg-blue-500"
+                                : "bg-green-500"
                         }`}
                         style={{ width: `${(passwordStrength.strength / 4) * 100}%` }}
                       />
@@ -217,7 +234,7 @@ export default function RegisterPage() {
                   </Badge>
                 </div>
               )}
-              
+
               <p className="text-xs text-muted-foreground">
                 Use 12+ characters with a mix of uppercase, lowercase, numbers, and symbols
               </p>
@@ -227,7 +244,14 @@ export default function RegisterPage() {
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
                     <path
                       className="opacity-75"
                       fill="currentColor"
@@ -243,7 +267,10 @@ export default function RegisterPage() {
 
             <p className="text-center text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link href="/auth/login" className="font-medium text-primary underline-offset-4 hover:underline">
+              <Link
+                href="/auth/login"
+                className="font-medium text-primary underline-offset-4 hover:underline"
+              >
                 Sign in
               </Link>
             </p>

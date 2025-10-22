@@ -27,7 +27,6 @@
     "terraform:apply": "cd infrastructure/terraform && terraform apply",
     "test:all": "bash scripts/test-runner.sh"
   },
-  "devDependencies": {},
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
       "eslint --fix"
@@ -35,5 +34,8 @@
     "*.{ts,tsx,js,jsx,css,md,json}": [
       "prettier --write"
     ]
+  },
+  "dependencies": {
+    "lucide-react": "^0.546.0"
   }
 }

@@ -22,10 +22,10 @@ export function Pagination({
 }: PaginationProps) {
   const pages = [];
   const maxPagesToShow = 5;
-  
+
   let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
   let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
-  
+
   if (endPage - startPage < maxPagesToShow - 1) {
     startPage = Math.max(1, endPage - maxPagesToShow + 1);
   }
@@ -44,12 +44,7 @@ export function Pagination({
           disabled={currentPage === 1}
           aria-label="Previous page"
         >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -62,11 +57,7 @@ export function Pagination({
         <div className="flex items-center gap-1">
           {startPage > 1 && (
             <>
-              <PageButton
-                page={1}
-                currentPage={currentPage}
-                onClick={() => onPageChange(1)}
-              />
+              <PageButton page={1} currentPage={currentPage} onClick={() => onPageChange(1)} />
               {startPage > 2 && <span className="px-2 text-muted-foreground">...</span>}
             </>
           )}
@@ -82,9 +73,7 @@ export function Pagination({
 
           {endPage < totalPages && (
             <>
-              {endPage < totalPages - 1 && (
-                <span className="px-2 text-muted-foreground">...</span>
-              )}
+              {endPage < totalPages - 1 && <span className="px-2 text-muted-foreground">...</span>}
               <PageButton
                 page={totalPages}
                 currentPage={currentPage}
@@ -101,18 +90,8 @@ export function Pagination({
           disabled={currentPage === totalPages}
           aria-label="Next page"
         >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </Button>
       </div>

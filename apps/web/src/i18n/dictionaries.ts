@@ -159,11 +159,13 @@ export const DICTIONARIES: Record<Locale, Messages> = {
           expense_tracking_title: "Seguimiento de gastos",
           expense_tracking_desc: "Controla y gestiona todos tus gastos en un solo lugar.",
           ai_categorization_title: "Categorización con IA",
-          ai_categorization_desc: "Clasifica gastos automáticamente con sugerencias impulsadas por IA.",
+          ai_categorization_desc:
+            "Clasifica gastos automáticamente con sugerencias impulsadas por IA.",
           attachments_title: "Adjuntos",
           attachments_desc: "Sube y gestiona recibos y documentos de soporte.",
           smart_search_title: "Búsqueda inteligente",
-          smart_search_desc: "Encuentra gastos rápidamente con filtros y búsqueda de texto completo.",
+          smart_search_desc:
+            "Encuentra gastos rápidamente con filtros y búsqueda de texto completo.",
           analytics_title: "Analítica",
           analytics_desc: "Visualiza tendencias de gasto y toma decisiones basadas en datos.",
           privacy_title: "Privacidad primero",
@@ -205,8 +207,7 @@ export const DICTIONARIES: Record<Locale, Messages> = {
     home: {
       hero: {
         title: "更智能地管理开支",
-        subtitle:
-          "{appName} 帮助你跟踪支出，使用人工智能自动分类，并更快做出更好的决策。",
+        subtitle: "{appName} 帮助你跟踪支出，使用人工智能自动分类，并更快做出更好的决策。",
         primary: "开始使用",
         secondary: "阅读文档",
         highlights: {
@@ -260,8 +261,7 @@ export const DICTIONARIES: Record<Locale, Messages> = {
       title: "发票",
       subtitle: "查看并管理你的所有支出和发票",
       error_title: "无法加载支出",
-      error_hint:
-        "后端可能尚未实现支出相关接口。一旦可用，此页面将显示支出记录。",
+      error_hint: "后端可能尚未实现支出相关接口。一旦可用，此页面将显示支出记录。",
       amount: "金额：",
       category: "类别：",
       empty_title: "未找到支出",

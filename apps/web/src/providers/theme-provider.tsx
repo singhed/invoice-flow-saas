@@ -15,7 +15,9 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 function getSystemTheme(): "light" | "dark" {
   if (typeof window === "undefined") return "light";
-  return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
 }
 
 function applyThemeClass(next: "light" | "dark") {
@@ -141,11 +143,10 @@ export function ThemeProvider({
   children,
 }: ThemeProviderProps) {
   const store = useMemo(() => getStore(storageKey, defaultTheme), [storageKey, defaultTheme]);
-  const snapshot = useSyncExternalStore<ThemeState>(
-    store.subscribe,
-    store.getSnapshot,
-    () => ({ theme: defaultTheme, system: "light" as const })
-  );
+  const snapshot = useSyncExternalStore<ThemeState>(store.subscribe, store.getSnapshot, () => ({
+    theme: defaultTheme,
+    system: "light" as const,
+  }));
 
   const setTheme = (value: Theme) => store.setTheme(value);
   const toggleTheme = () => store.toggle();

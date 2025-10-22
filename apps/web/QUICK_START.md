@@ -45,21 +45,22 @@ pnpm start
 
 ## Available Scripts
 
-| Script | Description |
-|--------|-------------|
-| `pnpm dev` | Start development server on port 3000 |
-| `pnpm build` | Build for production |
-| `pnpm start` | Start production server |
-| `pnpm lint` | Run ESLint |
-| `pnpm format` | Format code with Prettier |
-| `pnpm format:check` | Check code formatting |
-| `pnpm type-check` | Run TypeScript type checking |
+| Script              | Description                           |
+| ------------------- | ------------------------------------- |
+| `pnpm dev`          | Start development server on port 3000 |
+| `pnpm build`        | Build for production                  |
+| `pnpm start`        | Start production server               |
+| `pnpm lint`         | Run ESLint                            |
+| `pnpm format`       | Format code with Prettier             |
+| `pnpm format:check` | Check code formatting                 |
+| `pnpm type-check`   | Run TypeScript type checking          |
 
 ## Features
 
 ### Backend Health Check
 
 The home page (`/`) automatically checks the backend health status:
+
 - **Green indicator**: Backend is connected and healthy
 - **Red indicator**: Backend is unreachable or unhealthy
 
@@ -75,9 +76,11 @@ The application expects a Go backend API running at `http://localhost:8080` (con
 ### Required Backend Endpoints
 
 Currently implemented in backend:
+
 - `GET /healthz` - Health check endpoint
 
 Ready for implementation:
+
 - `GET /api/expenses` - List expenses
 - `POST /api/expenses` - Create expense
 - `PUT /api/expenses/:id` - Update expense
@@ -131,6 +134,7 @@ apps/web/
 ### Backend Connection Issues
 
 If you see "Cannot connect to backend" on the home page:
+
 1. Ensure the Go backend is running: `cd apps/api && go run ./cmd/api`
 2. Check that the backend is listening on `http://localhost:8080`
 3. Verify `NEXT_PUBLIC_API_URL` in `.env.local` matches your backend URL
@@ -138,6 +142,7 @@ If you see "Cannot connect to backend" on the home page:
 ### Build Errors
 
 If you encounter build errors:
+
 1. Delete `.next` directory: `rm -rf .next`
 2. Delete `node_modules` and reinstall: `rm -rf node_modules && pnpm install`
 3. Run type check: `pnpm type-check`

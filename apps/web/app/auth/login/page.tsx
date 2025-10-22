@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from "@/components/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Input,
+  Breadcrumb,
+} from "@/components/ui";
 import { env } from "@/env";
 import { useToast } from "@/hooks/useToast";
 import Link from "next/link";
@@ -48,7 +57,7 @@ export default function LoginPage() {
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -102,7 +111,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md">
+    <div className="mx-auto max-w-md space-y-6">
+      <Breadcrumb
+        items={[{ label: "Authentication", href: "/auth/login" }, { label: "Sign in" }]}
+      />
       <Card>
         <CardHeader>
           <CardTitle>Sign in</CardTitle>
@@ -157,7 +169,14 @@ export default function LoginPage() {
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
                     <path
                       className="opacity-75"
                       fill="currentColor"
@@ -173,7 +192,10 @@ export default function LoginPage() {
 
             <p className="text-center text-sm text-muted-foreground">
               Don&apos;t have an account?{" "}
-              <Link href="/auth/register" className="font-medium text-primary underline-offset-4 hover:underline">
+              <Link
+                href="/auth/register"
+                className="font-medium text-primary underline-offset-4 hover:underline"
+              >
                 Create one
               </Link>
             </p>

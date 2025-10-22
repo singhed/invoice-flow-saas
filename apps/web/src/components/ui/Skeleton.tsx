@@ -22,7 +22,7 @@ export function Skeleton({
         {
           "rounded-full": variant === "circular",
           "rounded-md": variant === "rectangular",
-          "rounded": variant === "text",
+          rounded: variant === "text",
         },
         className
       )}

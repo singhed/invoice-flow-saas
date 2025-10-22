@@ -66,7 +66,7 @@ const config: Config = {
         md: "var(--shadow-md)",
         lg: "var(--shadow-lg)",
         xl: "var(--shadow-xl)",
-        '2xl': "var(--shadow-2xl)",
+        "2xl": "var(--shadow-2xl)",
         inner: "var(--shadow-inner)",
         ring: "0 0 0 calc(var(--ring-offset-width, 0px) + var(--ring-width, 0px)) hsl(var(--ring))",
       },
