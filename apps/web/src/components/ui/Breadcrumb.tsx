@@ -14,10 +14,7 @@ interface BreadcrumbProps {
 
 export function Breadcrumb({ items, className }: BreadcrumbProps) {
   return (
-    <nav
-      aria-label="Breadcrumb"
-      className={cn("flex items-center space-x-1 text-sm", className)}
-    >
+    <nav aria-label="Breadcrumb" className={cn("flex items-center space-x-1 text-sm", className)}>
       <Link
         href="/"
         className="flex items-center text-muted-foreground transition-colors hover:text-foreground"
@@ -30,7 +27,7 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
         const isLast = index === items.length - 1;
 
         return (
-          <div key={index} className="flex items-center space-x-1">
+          <div key={`${item.label}-${index}`} className="flex items-center space-x-1">
             <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             {item.href && !isLast ? (
               <Link
@@ -41,10 +38,7 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
               </Link>
             ) : (
               <span
-                className={cn(
-                  "font-medium",
-                  isLast ? "text-foreground" : "text-muted-foreground"
-                )}
+                className={cn("font-medium", isLast ? "text-foreground" : "text-muted-foreground")}
                 aria-current={isLast ? "page" : undefined}
               >
                 {item.label}

@@ -1,3 +1,5 @@
+"use client";
+
 import { InputHTMLAttributes, forwardRef, ReactNode, useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -31,17 +33,14 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
     const errorId = error ? `${inputId}-error` : undefined;
     const helperId = helperText ? `${inputId}-helper` : undefined;
-    
+
     const isPassword = type === "password";
     const inputType = isPassword && showPassword ? "text" : type;
 
     return (
       <div className="space-y-2">
         {label && (
-          <label
-            htmlFor={inputId}
-            className="text-sm font-medium text-foreground"
-          >
+          <label htmlFor={inputId} className="text-sm font-medium text-foreground">
             {label}
             {props.required && <span className="ml-1 text-destructive">*</span>}
           </label>
@@ -80,7 +79,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:text-foreground"
+                  className="text-muted-foreground transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                   disabled={disabled}
                 >

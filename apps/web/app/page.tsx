@@ -15,9 +15,7 @@ async function checkBackendHealth(t: TFunc) {
     return {
       status: health.status === "ok" ? "connected" : "error",
       message:
-        health.status === "ok"
-          ? t("home.status.ok_message")
-          : t("home.status.unexpected_status"),
+        health.status === "ok" ? t("home.status.ok_message") : t("home.status.unexpected_status"),
     } as const;
   } catch (error) {
     if (error instanceof ApiClientError) {
@@ -64,25 +62,41 @@ export default async function HomePage() {
           </p>
           <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link href="/invoices">
-              <Button size="lg" variant="primary">{t("home.hero.primary")}</Button>
+              <Button size="lg" variant="primary">
+                {t("home.hero.primary")}
+              </Button>
             </Link>
             <a href="https://nextjs.org/docs" target="_blank" rel="noreferrer noopener">
-              <Button size="lg" variant="outline">{t("home.hero.secondary")}</Button>
+              <Button size="lg" variant="outline">
+                {t("home.hero.secondary")}
+              </Button>
             </a>
           </div>
 
           <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="rounded-md border border-border/60 bg-card/50 p-4 text-left">
-              <div className="text-sm font-semibold text-foreground">{t("home.hero.highlights.fast_setup_title")}</div>
-              <div className="text-xs text-muted-foreground">{t("home.hero.highlights.fast_setup_desc")}</div>
+              <div className="text-sm font-semibold text-foreground">
+                {t("home.hero.highlights.fast_setup_title")}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {t("home.hero.highlights.fast_setup_desc")}
+              </div>
             </div>
             <div className="rounded-md border border-border/60 bg-card/50 p-4 text-left">
-              <div className="text-sm font-semibold text-foreground">{t("home.hero.highlights.ai_title")}</div>
-              <div className="text-xs text-muted-foreground">{t("home.hero.highlights.ai_desc")}</div>
+              <div className="text-sm font-semibold text-foreground">
+                {t("home.hero.highlights.ai_title")}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {t("home.hero.highlights.ai_desc")}
+              </div>
             </div>
             <div className="rounded-md border border-border/60 bg-card/50 p-4 text-left">
-              <div className="text-sm font-semibold text-foreground">{t("home.hero.highlights.secure_title")}</div>
-              <div className="text-xs text-muted-foreground">{t("home.hero.highlights.secure_desc")}</div>
+              <div className="text-sm font-semibold text-foreground">
+                {t("home.hero.highlights.secure_title")}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {t("home.hero.highlights.secure_desc")}
+              </div>
             </div>
           </div>
         </div>
@@ -123,10 +137,14 @@ export default async function HomePage() {
           <CardContent>
             <div className="space-y-3">
               <Link href="/invoices">
-                <Button variant="primary" className="w-full">{t("home.quickstart.view_invoices")}</Button>
+                <Button variant="primary" className="w-full">
+                  {t("home.quickstart.view_invoices")}
+                </Button>
               </Link>
               <a href="https://nextjs.org/docs" target="_blank" rel="noreferrer noopener">
-                <Button variant="outline" className="w-full">{t("home.quickstart.next_docs")}</Button>
+                <Button variant="outline" className="w-full">
+                  {t("home.quickstart.next_docs")}
+                </Button>
               </a>
             </div>
           </CardContent>
@@ -142,42 +160,64 @@ export default async function HomePage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-lg border border-border bg-card p-5 shadow">
             <div className="mb-3 flex items-center gap-2">
-              <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30">💳</span>
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30">
+                💳
+              </span>
               <h3 className="font-semibold">{t("home.features.items.expense_tracking_title")}</h3>
             </div>
-            <p className="text-sm text-muted-foreground">{t("home.features.items.expense_tracking_desc")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("home.features.items.expense_tracking_desc")}
+            </p>
           </div>
           <div className="rounded-lg border border-border bg-card p-5 shadow">
             <div className="mb-3 flex items-center gap-2">
-              <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30">✨</span>
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30">
+                ✨
+              </span>
               <h3 className="font-semibold">{t("home.features.items.ai_categorization_title")}</h3>
             </div>
-            <p className="text-sm text-muted-foreground">{t("home.features.items.ai_categorization_desc")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("home.features.items.ai_categorization_desc")}
+            </p>
           </div>
           <div className="rounded-lg border border-border bg-card p-5 shadow">
             <div className="mb-3 flex items-center gap-2">
-              <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30">📎</span>
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30">
+                📎
+              </span>
               <h3 className="font-semibold">{t("home.features.items.attachments_title")}</h3>
             </div>
-            <p className="text-sm text-muted-foreground">{t("home.features.items.attachments_desc")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("home.features.items.attachments_desc")}
+            </p>
           </div>
           <div className="rounded-lg border border-border bg-card p-5 shadow">
             <div className="mb-3 flex items-center gap-2">
-              <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30">🔍</span>
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30">
+                🔍
+              </span>
               <h3 className="font-semibold">{t("home.features.items.smart_search_title")}</h3>
             </div>
-            <p className="text-sm text-muted-foreground">{t("home.features.items.smart_search_desc")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("home.features.items.smart_search_desc")}
+            </p>
           </div>
           <div className="rounded-lg border border-border bg-card p-5 shadow">
             <div className="mb-3 flex items-center gap-2">
-              <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30">📊</span>
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30">
+                📊
+              </span>
               <h3 className="font-semibold">{t("home.features.items.analytics_title")}</h3>
             </div>
-            <p className="text-sm text-muted-foreground">{t("home.features.items.analytics_desc")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("home.features.items.analytics_desc")}
+            </p>
           </div>
           <div className="rounded-lg border border-border bg-card p-5 shadow">
             <div className="mb-3 flex items-center gap-2">
-              <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30">🔐</span>
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30">
+                🔐
+              </span>
               <h3 className="font-semibold">{t("home.features.items.privacy_title")}</h3>
             </div>
             <p className="text-sm text-muted-foreground">{t("home.features.items.privacy_desc")}</p>
@@ -193,7 +233,9 @@ export default async function HomePage() {
             <p className="text-sm text-muted-foreground">{t("home.cta.subtitle")}</p>
           </div>
           <Link href="/invoices">
-            <Button size="lg" variant="primary">{t("home.cta.open_invoices")}</Button>
+            <Button size="lg" variant="primary">
+              {t("home.cta.open_invoices")}
+            </Button>
           </Link>
         </CardContent>
       </Card>

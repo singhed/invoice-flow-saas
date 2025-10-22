@@ -38,7 +38,8 @@ export default function ProfilePage() {
   async function fetchMe() {
     setLoading(true);
     try {
-      const token = typeof window !== "undefined" ? window.localStorage.getItem("auth_token") : null;
+      const token =
+        typeof window !== "undefined" ? window.localStorage.getItem("auth_token") : null;
       if (!token) {
         toast({
           message: "Not signed in. Please login.",
@@ -153,30 +154,40 @@ export default function ProfilePage() {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="rounded-md border border-border/60 bg-card/50 p-4 space-y-2">
+              <div className="space-y-2 rounded-md border border-border/60 bg-card/50 p-4">
                 <div className="text-sm">
-                  <span className="text-muted-foreground">ID:</span> <span className="ml-2 font-mono">{user.id}</span>
+                  <span className="text-muted-foreground">ID:</span>{" "}
+                  <span className="ml-2 font-mono">{user.id}</span>
                 </div>
                 <div className="text-sm">
-                  <span className="text-muted-foreground">Email:</span> <span className="ml-2">{user.email}</span>
+                  <span className="text-muted-foreground">Email:</span>{" "}
+                  <span className="ml-2">{user.email}</span>
                 </div>
                 {user.name && (
                   <div className="text-sm">
-                    <span className="text-muted-foreground">Name:</span> <span className="ml-2">{user.name}</span>
+                    <span className="text-muted-foreground">Name:</span>{" "}
+                    <span className="ml-2">{user.name}</span>
                   </div>
                 )}
                 <div className="text-sm">
-                  <span className="text-muted-foreground">Role:</span> <span className="ml-2 capitalize">{user.role}</span>
+                  <span className="text-muted-foreground">Role:</span>{" "}
+                  <span className="ml-2 capitalize">{user.role}</span>
                 </div>
                 <div className="text-sm">
-                  <span className="text-muted-foreground">Created:</span> <span className="ml-2">{user.createdAt}</span>
+                  <span className="text-muted-foreground">Created:</span>{" "}
+                  <span className="ml-2">{user.createdAt}</span>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button onClick={fetchMe} variant="outline" size="sm" disabled={loading}>
                   {loading ? "Loading..." : "Refresh profile"}
                 </Button>
-                <Button onClick={handleRefreshAccess} variant="secondary" size="sm" disabled={loading}>
+                <Button
+                  onClick={handleRefreshAccess}
+                  variant="secondary"
+                  size="sm"
+                  disabled={loading}
+                >
                   {loading ? "Loading..." : "Refresh token"}
                 </Button>
                 <Button onClick={handleLogout} variant="danger" size="sm" disabled={loading}>

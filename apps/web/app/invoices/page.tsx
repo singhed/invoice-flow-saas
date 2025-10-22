@@ -30,11 +30,11 @@ type SortOption = "date-desc" | "date-asc" | "amount-desc" | "amount-asc" | "des
 export default function InvoicesPage() {
   const t = createTranslator("en"); // Using hardcoded locale since this is client-side
   const { toast } = useToast();
-  
+
   const [expenses, setExpenses] = useState<Expense[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortOption>("date-desc");
@@ -54,7 +54,8 @@ export default function InvoicesPage() {
         setExpenses(expensesWithStatus);
         setError(null);
       } catch (err) {
-        const errorMessage = err instanceof ApiClientError ? err.message : "Failed to fetch expenses";
+        const errorMessage =
+          err instanceof ApiClientError ? err.message : "Failed to fetch expenses";
         setError(errorMessage);
         toast({
           title: "Error loading invoices",
@@ -219,7 +220,7 @@ export default function InvoicesPage() {
     <div className="space-y-6">
       {/* Breadcrumb Navigation */}
       <Breadcrumb items={[{ label: "Invoices" }]} />
-      
+
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -307,7 +308,9 @@ export default function InvoicesPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <CardTitle className="text-lg">{expense.description}</CardTitle>
-                      <CardDescription>{new Date(expense.date).toLocaleDateString()}</CardDescription>
+                      <CardDescription>
+                        {new Date(expense.date).toLocaleDateString()}
+                      </CardDescription>
                     </div>
                     <DropdownMenu
                       trigger={
@@ -315,7 +318,12 @@ export default function InvoicesPage() {
                           className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
                           aria-label="Invoice actions"
                         >
-                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg
+                            className="h-5 w-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
                             <path
                               strokeLinecap="round"
                               strokeLinejoin="round"
@@ -327,7 +335,12 @@ export default function InvoicesPage() {
                       }
                     >
                       <DropdownMenuItem onClick={() => handleView(expense.id)}>
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -344,7 +357,12 @@ export default function InvoicesPage() {
                         View Details
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleEdit(expense.id)}>
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -356,7 +374,12 @@ export default function InvoicesPage() {
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => handleDelete(expense.id)} variant="danger">
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -373,7 +396,9 @@ export default function InvoicesPage() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">{t("invoices.amount")}</span>
-                      <span className="text-lg font-semibold text-primary">${expense.amount.toFixed(2)}</span>
+                      <span className="text-lg font-semibold text-primary">
+                        ${expense.amount.toFixed(2)}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between gap-2">
                       {expense.category && (
@@ -387,8 +412,8 @@ export default function InvoicesPage() {
                             expense.status === "paid"
                               ? "success"
                               : expense.status === "overdue"
-                              ? "error"
-                              : "warning"
+                                ? "error"
+                                : "warning"
                           }
                           size="sm"
                         >
@@ -397,7 +422,9 @@ export default function InvoicesPage() {
                       )}
                     </div>
                     {expense.client_notes && (
-                      <p className="text-xs text-muted-foreground line-clamp-2">{expense.client_notes}</p>
+                      <p className="line-clamp-2 text-xs text-muted-foreground">
+                        {expense.client_notes}
+                      </p>
                     )}
                   </div>
                 </CardContent>

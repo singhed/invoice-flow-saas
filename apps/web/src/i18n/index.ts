@@ -1,4 +1,12 @@
-import { DICTIONARIES, DEFAULT_LOCALE, SUPPORTED_LOCALES, getMessage, format, type Locale, type Messages } from "./dictionaries";
+import {
+  DICTIONARIES,
+  DEFAULT_LOCALE,
+  SUPPORTED_LOCALES,
+  getMessage,
+  format,
+  type Locale,
+  type Messages,
+} from "./dictionaries";
 
 export type { Locale, Messages };
 
