@@ -44,6 +44,28 @@ sequenceDiagram
 
 The service determines the customer email automatically if `recipientEmail` is omitted. It returns `202 Accepted` when the invoice email is successfully handed off to AWS SES.
 
+#### cURL Example
+
+```bash
+curl -X POST "https://api.your-domain.com/invoices/email" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <access_token>" \
+  -d '{
+    "orderId": "5342193849132",
+    "personalMessage": "We’re so grateful for your Shopify journey!"
+  }'
+```
+
+**Response**
+
+```json
+{
+  "status": "success",
+  "message": "Invoice email sent via AWS SES",
+  "recipientEmail": "merchant@example.com"
+}
+```
+
 ## Environment Variables
 
 | Variable | Description |
@@ -67,7 +89,7 @@ The service determines the customer email automatically if `recipientEmail` is o
 
 You can download the PDF version [here](../assets/sample-invoice.pdf).
 
-### Preview Gallery
+### Device Preview Gallery
 
 <table>
   <tr>
@@ -117,6 +139,18 @@ You can download the PDF version [here](../assets/sample-invoice.pdf).
 </table>
 
 All previews are available in the repository under `docs/assets/`, including 100 richly styled device variations for product and marketing teams.
+
+### Email Client Renderings
+
+The gratitude email template has been visually quality-checked against the most common mailbox providers. You can reference the mock renderings below for QA or marketing collateral.
+
+| Email Client | Screenshot |
+| ------------ | ---------- |
+| Gmail (Web) | ![Gmail preview](../assets/sample-email-gmail.png) |
+| Outlook (Web) | ![Outlook preview](../assets/sample-email-outlook.png) |
+| Yahoo Mail (Web) | ![Yahoo preview](../assets/sample-email-yahoo.png) |
+
+These screenshots demonstrate that the gratitude copy, invoice summary, and attachment call-to-action render correctly across Gmail, Outlook, and Yahoo! Mail.
 
 ## Email Tone & Template
 

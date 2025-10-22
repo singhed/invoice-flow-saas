@@ -90,7 +90,8 @@ The invoice service now pulls Shopify order data, renders a polished PDF, and de
 > - [Service deep dive](docs/services/invoice-service.md)
 > - [Sample invoice PDF](docs/assets/sample-invoice.pdf)
 > - [Sample invoice image](docs/assets/sample-invoice.png)
-> - [Colourful preview gallery](docs/services/invoice-service.md#preview-gallery)
+> - [Colourful preview gallery](docs/services/invoice-service.md#device-preview-gallery)
+> - [Email client renderings](docs/services/invoice-service.md#email-client-renderings)
 
 ## 🛠️ Technology Stack
 
