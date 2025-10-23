@@ -7,13 +7,13 @@ services:
     ports:
       - '5432:5432'
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: invoicedb
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env file}
+      POSTGRES_DB: ${POSTGRES_DB:-invoicedb}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,11 +23,21 @@ services:
     container_name: invoice-saas-redis
     ports:
       - '6379:6379'
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes
+    command: >
+      sh -c '
+        if [ -n "$REDIS_PASSWORD" ]; then
+          redis-server --appendonly yes --requirepass "$REDIS_PASSWORD"
+        else
+          echo "WARNING: Redis is running without authentication. Set REDIS_PASSWORD in .env for production."
+          redis-server --appendonly yes
+        fi
+      '
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test: ['CMD', 'sh', '-c', 'if [ -n "$REDIS_PASSWORD" ]; then redis-cli -a "$REDIS_PASSWORD" ping; else redis-cli ping; fi']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -42,10 +52,10 @@ services:
       - SERVICES=s3,sqs,sns,secretsmanager
       - DEBUG=1
       - DATA_DIR=/tmp/localstack/data
-      - DOCKER_HOST=unix:///var/run/docker.sock
+      # DOCKER_HOST removed for security - no Docker socket access
     volumes:
       - localstack_data:/tmp/localstack
-      - /var/run/docker.sock:/var/run/docker.sock
+      # Docker socket mount removed for security (prevents container escape)
 
 volumes:
   postgres_data:

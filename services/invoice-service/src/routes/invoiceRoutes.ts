@@ -13,7 +13,17 @@ const router = express.Router();
 const invoiceEmailSchema = Joi.object<InvoiceEmailRequestBody>({
   orderId: Joi.string().trim().required(),
   recipientEmail: Joi.string().email({ tlds: { allow: false } }).optional(),
-  personalMessage: Joi.string().max(1500).optional(),
+  personalMessage: Joi.string()
+    .max(1500)
+    .optional()
+    .custom((value, helpers) => {
+      if (!value) return value;
+      // Strip all HTML tags to prevent email injection
+      const stripped = value.replace(/<[^>]*>/g, '');
+      // Remove any remaining suspicious characters
+      const sanitized = stripped.replace(/[<>'"&]/g, '');
+      return sanitized;
+    }, 'HTML sanitization'),
 });
 
 export const EMAIL_FLOW_MERMAID = `sequenceDiagram
@@ -38,7 +48,13 @@ const determineRecipientEmail = (order: ShopifyOrder, explicit?: string): string
 
 const sanitizeInvoiceName = (order: ShopifyOrder): string => {
   if (order.name) {
-    return order.name.replace(/[^a-zA-Z0-9-_#]/g, '-');
+    // Remove all special characters except hyphen and underscore
+    const sanitized = order.name.replace(/[^a-zA-Z0-9-_]/g, '-');
+    // Prevent multiple consecutive hyphens
+    const cleaned = sanitized.replace(/-+/g, '-');
+    // Remove leading/trailing hyphens
+    const trimmed = cleaned.replace(/^-+|-+$/g, '');
+    return trimmed || 'Invoice';
   }
   if (order.order_number) {
     return `Order-${order.order_number}`;
