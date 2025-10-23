@@ -43,6 +43,8 @@ tfplan
 
 # Kubernetes
 kubeconfig
+infrastructure/kubernetes/base/secrets.yaml
+infrastructure/kubernetes/overlays/*/secrets.yaml
 
 # Docker
 docker-compose.override.yml

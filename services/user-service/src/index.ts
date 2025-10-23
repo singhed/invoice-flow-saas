@@ -17,15 +17,56 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3003;
-const ACCESS_TOKEN_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || ACCESS_TOKEN_SECRET;
+const ACCESS_TOKEN_SECRET = process.env.JWT_SECRET;
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
+
+if (!ACCESS_TOKEN_SECRET || !REFRESH_TOKEN_SECRET) {
+  throw new Error('CRITICAL SECURITY ERROR: JWT_SECRET and REFRESH_TOKEN_SECRET environment variables are required. Application cannot start.');
+}
+
+if (ACCESS_TOKEN_SECRET.length < 32 || REFRESH_TOKEN_SECRET.length < 32) {
+  throw new Error('CRITICAL SECURITY ERROR: JWT_SECRET and REFRESH_TOKEN_SECRET must be at least 32 characters long for adequate security.');
+}
+
+if (ACCESS_TOKEN_SECRET === REFRESH_TOKEN_SECRET) {
+  throw new Error('CRITICAL SECURITY ERROR: JWT_SECRET and REFRESH_TOKEN_SECRET must be different values.');
+}
+
+// Bcrypt configuration for password hashing
+const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12', 10);
+if (BCRYPT_ROUNDS < 12 || BCRYPT_ROUNDS > 15) {
+  logger.warn('BCRYPT_ROUNDS should be between 12 and 15. Using default: 12', { configured: BCRYPT_ROUNDS });
+}
 
 app.disable('x-powered-by');
 app.use(helmet());
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map((o) => o.trim()).filter(Boolean);
+
+if (process.env.NODE_ENV === 'production' && allowedOrigins.length === 0) {
+  throw new Error('CRITICAL SECURITY ERROR: ALLOWED_ORIGINS must be explicitly configured in production environment.');
+}
+
 app.use(cors({
-  origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, server-to-server)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    // In development, allow if no origins configured
+    if (allowedOrigins.length === 0 && process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      logger.warn('CORS: Blocked request from unauthorized origin', { origin });
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -122,17 +163,20 @@ app.get('/auth/csrf-token', csrfProtection, (req, res) => {
 const registerSchema = Joi.object({
   email: Joi.string().email({ tlds: { allow: false } }).max(254).required(),
   password: Joi.string()
-    .min(8)
+    .min(12)
     .max(128)
-    .pattern(/^(?=.*[A-Za-z])(?=.*\d).+$/)
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/)
     .required()
-    .messages({ 'string.pattern.base': 'Password must include letters and numbers' }),
+    .messages({ 
+      'string.min': 'Password must be at least 12 characters long',
+      'string.pattern.base': 'Password must include uppercase, lowercase, numbers, and special characters (@$!%*?&)' 
+    }),
   name: Joi.string().max(100).allow('', null),
 });
 
 const loginSchema = Joi.object({
   email: Joi.string().email({ tlds: { allow: false } }).max(254).required(),
-  password: Joi.string().min(8).max(128).required(),
+  password: Joi.string().min(1).max(128).required(), // Min 1 for login (existing users might have old passwords)
 });
 
 function validateBody(schema: Joi.ObjectSchema) {
@@ -152,7 +196,15 @@ function sanitizeName(name?: string) {
   return xss(name, { whiteList: {}, stripIgnoreTag: true, stripIgnoreTagBody: ['script'] });
 }
 
-app.get('/health', (req, res) => {
+const healthLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 60, // 60 requests per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: 'Too many health check requests, please try again later.',
+});
+
+app.get('/health', healthLimiter, (req, res) => {
   res.status(200).json({ status: 'healthy', service: 'user-service', timestamp: new Date().toISOString() });
 });
 
@@ -165,7 +217,7 @@ app.post('/auth/register', authLimiter, csrfProtection, validateBody(registerSch
       throw new ConflictError('User already exists');
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
     const user: User = {
       id: uuidv4(),
       email: normalizedEmail,

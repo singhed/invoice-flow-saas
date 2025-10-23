@@ -21,9 +21,31 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+if (process.env.NODE_ENV === 'production' && allowedOrigins.length === 0) {
+  throw new Error('CRITICAL SECURITY ERROR: ALLOWED_ORIGINS must be explicitly configured in production environment.');
+}
+
 app.use(
   cors({
-    origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, server-to-server)
+      if (!origin) {
+        return callback(null, true);
+      }
+      
+      // In development, allow if no origins configured
+      if (allowedOrigins.length === 0 && process.env.NODE_ENV !== 'production') {
+        return callback(null, true);
+      }
+      
+      // Check if origin is in allowed list
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        logger.warn('CORS: Blocked request from unauthorized origin', { origin });
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
     methods: ['GET', 'POST', 'OPTIONS'],
@@ -41,9 +63,17 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
+const healthLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 60, // 60 requests per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: 'Too many health check requests, please try again later.',
+});
+
 app.use(limiter);
 
-app.get('/health', (_req, res) => {
+app.get('/health', healthLimiter, (_req, res) => {
   res.status(200).json({ status: 'healthy', service: 'invoice-service', timestamp: new Date().toISOString() });
 });
 
