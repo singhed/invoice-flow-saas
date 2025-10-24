@@ -5,7 +5,7 @@ import { logger } from '@invoice-saas/shared';
 const router = Router();
 
 const INVOICE_SERVICE_URL = process.env.INVOICE_SERVICE_URL || 'http://invoice-service:3001';
-const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || 'http://payment-service:3002';
+const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || 'http://payment-service:3004';
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://user-service:3003';
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3003';
 
