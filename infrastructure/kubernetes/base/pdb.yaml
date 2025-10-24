@@ -1,0 +1,63 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: api-gateway-pdb
+  namespace: invoice-saas
+spec:
+  minAvailable: 15
+  selector:
+    matchLabels:
+      app: api-gateway
+  unhealthyPodEvictionPolicy: AlwaysAllow
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: invoice-service-pdb
+  namespace: invoice-saas
+spec:
+  minAvailable: 20
+  selector:
+    matchLabels:
+      app: invoice-service
+  unhealthyPodEvictionPolicy: AlwaysAllow
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: analytics-service-pdb
+  namespace: invoice-saas
+spec:
+  minAvailable: 12
+  selector:
+    matchLabels:
+      app: analytics-service
+  unhealthyPodEvictionPolicy: AlwaysAllow
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: search-service-pdb
+  namespace: invoice-saas
+spec:
+  minAvailable: 10
+  selector:
+    matchLabels:
+      app: search-service
+  unhealthyPodEvictionPolicy: AlwaysAllow
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: user-service-pdb
+  namespace: invoice-saas
+spec:
+  minAvailable: 15
+  selector:
+    matchLabels:
+      app: user-service
+  unhealthyPodEvictionPolicy: AlwaysAllow
