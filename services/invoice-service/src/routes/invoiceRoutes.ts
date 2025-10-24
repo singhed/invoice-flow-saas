@@ -7,6 +7,8 @@ import { emailService } from '../services/emailService';
 import { buildGratefulEmailContent } from '../templates/gratitudeEmail';
 import { InvoiceEmailRequestBody, ShopifyOrder } from '../types';
 import { config } from '../config';
+import { exportService } from '../services/exportService';
+import { budgetService } from '../services/budgetService';
 
 const router = express.Router();
 
@@ -133,6 +135,207 @@ router.post('/email', async (req, res, next) => {
       status: 'success',
       message: 'Invoice email sent via AWS SES',
       recipientEmail,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/export', async (req, res, next) => {
+  try {
+    const { format = 'csv', status, startDate, endDate } = req.query;
+
+    const mockInvoices = [
+      {
+        id: '1',
+        invoiceNumber: 'INV-001',
+        customerName: 'Acme Corp',
+        customerEmail: 'billing@acme.com',
+        amount: 1500.00,
+        currency: 'USD',
+        status: 'paid',
+        issueDate: '2024-01-15',
+        dueDate: '2024-02-15',
+        paidDate: '2024-02-10',
+        description: 'Consulting services',
+      },
+      {
+        id: '2',
+        invoiceNumber: 'INV-002',
+        customerName: 'TechStart Inc',
+        customerEmail: 'finance@techstart.com',
+        amount: 2500.00,
+        currency: 'USD',
+        status: 'pending',
+        issueDate: '2024-01-20',
+        dueDate: '2024-02-20',
+        description: 'Software development',
+      },
+    ];
+
+    const exportData = await exportService.exportInvoices(mockInvoices, format as string);
+    const mimeType = exportService.getMimeType(format as string);
+    const extension = exportService.getFileExtension(format as string);
+
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="invoices-export-${Date.now()}.${extension}"`);
+
+    logger.info('Invoices exported', { format, count: mockInvoices.length });
+
+    res.send(exportData);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/budgets', async (req, res, next) => {
+  try {
+    const { name, amount, currency, period, startDate, endDate, category, customerId } = req.body;
+
+    const budget = await budgetService.createBudget({
+      name,
+      amount,
+      currency,
+      period,
+      startDate,
+      endDate,
+      category,
+      customerId,
+    });
+
+    logger.info('Budget created', { budgetId: budget.id });
+
+    res.status(201).json({
+      status: 'success',
+      data: budget,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/budgets', async (req, res, next) => {
+  try {
+    const { customerId, period } = req.query;
+
+    const budgets = await budgetService.getAllBudgets({
+      customerId: customerId as string,
+      period: period as string,
+    });
+
+    logger.info('Budgets retrieved', { count: budgets.length });
+
+    res.status(200).json({
+      status: 'success',
+      data: budgets,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/budgets/:budgetId', async (req, res, next) => {
+  try {
+    const { budgetId } = req.params;
+
+    const budgetStatus = await budgetService.getBudgetStatus(budgetId);
+
+    if (!budgetStatus) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Budget not found',
+      });
+    }
+
+    logger.info('Budget status retrieved', { budgetId });
+
+    res.status(200).json({
+      status: 'success',
+      data: budgetStatus,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.put('/budgets/:budgetId', async (req, res, next) => {
+  try {
+    const { budgetId } = req.params;
+    const updates = req.body;
+
+    const updatedBudget = await budgetService.updateBudget(budgetId, updates);
+
+    if (!updatedBudget) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Budget not found',
+      });
+    }
+
+    logger.info('Budget updated', { budgetId });
+
+    res.status(200).json({
+      status: 'success',
+      data: updatedBudget,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/budgets/:budgetId', async (req, res, next) => {
+  try {
+    const { budgetId } = req.params;
+
+    const deleted = await budgetService.deleteBudget(budgetId);
+
+    if (!deleted) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Budget not found',
+      });
+    }
+
+    logger.info('Budget deleted', { budgetId });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Budget deleted successfully',
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/budgets/alerts/all', async (req, res, next) => {
+  try {
+    const alerts = await budgetService.getBudgetAlerts();
+
+    logger.info('Budget alerts retrieved', { count: alerts.length });
+
+    res.status(200).json({
+      status: 'success',
+      data: alerts,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/budgets/reports/summary', async (req, res, next) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    const report = await budgetService.generateBudgetReport({
+      startDate: startDate as string,
+      endDate: endDate as string,
+    });
+
+    logger.info('Budget report generated');
+
+    res.status(200).json({
+      status: 'success',
+      data: report,
     });
   } catch (err) {
     next(err);
