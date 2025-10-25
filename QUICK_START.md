@@ -1,187 +1,146 @@
 # Quick Start Guide
 
-Get up and running with the Invoice Flow SaaS database in 5 minutes!
+Get the Invoice SaaS application running in 5 minutes.
 
-## Prerequisites Check
+## Prerequisites
+
+- Node.js 20+
+- pnpm 8+
+- Docker
+
+## Setup Steps
+
+### 1. Install Dependencies
 
 ```bash
-# Check Node.js (need 18+)
-node --version
-
-# Check PostgreSQL (need 14+)
-psql --version
-
-# Check npm
-npm --version
+pnpm install
 ```
 
-## 5-Minute Setup
-
-### 1. Install Dependencies (30 seconds)
+### 2. Start Infrastructure
 
 ```bash
-npm install
+docker-compose up -d
 ```
 
-### 2. Create PostgreSQL Database (1 minute)
+### 3. Configure Environment
 
 ```bash
-# Option A: Using psql
-psql -U postgres -c "CREATE DATABASE invoice_flow_db;"
-
-# Option B: Using createdb
-createdb invoice_flow_db
-```
-
-### 3. Configure Environment (30 seconds)
-
-```bash
-# Copy example environment file
 cp .env.example .env
-
-# Edit .env with your database credentials
-# Default: postgresql://user:password@localhost:5432/invoice_flow_db
+# Edit .env with your configuration if needed
 ```
 
-### 4. Run Migrations (1 minute)
+### 4. Run Migrations
 
 ```bash
-npm run db:migrate:deploy
+pnpm --filter @invoice-saas/invoice-service prisma:migrate:deploy
+pnpm --filter @invoice-saas/invoice-service prisma:generate
 ```
 
-### 5. Generate Prisma Client (30 seconds)
+### 5. Start Services
 
 ```bash
-npm run db:generate
+pnpm dev
 ```
 
-### 6. Seed Sample Data (30 seconds) [Optional]
+## Access the Application
 
-```bash
-npm run db:seed
-```
-
-### 7. Verify Installation (30 seconds)
-
-```bash
-# Open Prisma Studio to browse your database
-npm run db:studio
-```
-
-## That's It! 🎉
-
-Your database is ready to use. Open http://localhost:5555 to see your data in Prisma Studio.
+- Frontend: http://localhost:3000
+- API: http://localhost:3000/api
+- API Docs: http://localhost:3000/api-docs
 
 ## Essential Commands
 
 ```bash
-# Database operations
-npm run db:generate          # Generate Prisma Client
-npm run db:migrate          # Create new migration (dev)
-npm run db:migrate:deploy   # Apply migrations (prod)
-npm run db:seed             # Seed sample data
-npm run db:studio           # Open database GUI
+# Development
+pnpm dev                    # Start all services
+pnpm run lint              # Lint code
+pnpm run typecheck         # Type checking
+pnpm run format            # Format code
 
-# Validation
-npx prisma validate         # Check schema
-npx prisma format           # Format schema
-npx prisma migrate status   # Check migrations
+# Database
+pnpm --filter @invoice-saas/invoice-service prisma:migrate:dev   # Create migration
+pnpm --filter @invoice-saas/invoice-service prisma:studio        # Open database GUI
+
+# Testing
+pnpm run test:unit         # Unit tests
+pnpm run test:integration  # Integration tests
+pnpm run test:e2e          # E2E tests
+
+# Production
+pnpm run docker:build      # Build Docker images
+kubectl apply -k infrastructure/kubernetes/overlays/prod  # Deploy to K8s
 ```
 
-## What You Get
+## What's Included
 
-After setup, you have:
-- ✅ 11 database tables
-- ✅ 8 enum types
-- ✅ 25+ optimized indexes
-- ✅ Sample data (if you seeded)
-- ✅ Type-safe Prisma Client
-
-## Sample Data Included
-
-If you ran the seed:
-- 2 users (admin@example.com, john.doe@example.com)
-- 3 clients with full details
-- 4 projects in various states
-- Multiple time entries
-- 3 invoices (Draft, Sent, Paid)
-- Payment records
-- Expenses with categories
-- Reminders
-- Integration configurations
+After setup you have:
+- Microservices architecture (API Gateway, Invoice, User, Payment services)
+- React frontend with TypeScript
+- PostgreSQL database with Prisma ORM
+- Redis caching layer
+- Authentication with JWT
+- API documentation
+- Automated tests
 
 ## Quick Test
 
-```javascript
-// test.js
-const { PrismaClient } = require('./generated/prisma');
-const prisma = new PrismaClient();
+Create a test user and invoice:
 
-async function main() {
-  const users = await prisma.user.findMany();
-  console.log('Users:', users.length);
-  
-  const clients = await prisma.client.findMany();
-  console.log('Clients:', clients.length);
-}
+```bash
+# Register user
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@example.com", "password": "Test123!"}'
 
-main()
-  .catch(console.error)
-  .finally(() => prisma.$disconnect());
+# Login and get token
+TOKEN=$(curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@example.com", "password": "Test123!"}' \
+  | jq -r '.token')
+
+# Create invoice
+curl -X POST http://localhost:3000/api/invoices \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "clientName": "Test Client",
+    "clientEmail": "client@example.com",
+    "amount": 100.00,
+    "currency": "USD",
+    "dueDate": "2024-12-31"
+  }'
 ```
-
-Run: `node test.js`
-
-## Next Steps
-
-1. **Read the docs** - Check out README.md and SETUP_GUIDE.md
-2. **Explore schema** - Review prisma/ERD.md for data model
-3. **Start coding** - Import Prisma Client in your app
-4. **Build features** - Create your API/application logic
 
 ## Common Issues
 
-### Can't connect to database
+### Port Already in Use
+
 ```bash
-# Check PostgreSQL is running
-sudo systemctl status postgresql
-# or
-pg_isready
+# Kill process on port 3000
+lsof -ti:3000 | xargs kill -9
 ```
 
-### Migration fails
-```bash
-# Check migration status
-npx prisma migrate status
+### Database Connection Error
 
-# Reset if needed (WARNING: deletes data)
-npx prisma migrate reset
+```bash
+# Check Docker containers
+docker ps
+
+# Restart PostgreSQL
+docker-compose restart postgres
 ```
 
-### Prisma Client not found
+### Module Not Found
+
 ```bash
-# Regenerate client
-npm run db:generate
+# Reinstall dependencies
+rm -rf node_modules pnpm-lock.yaml
+pnpm install
 ```
 
-## Documentation
+## Next Steps
 
-- **[README.md](README.md)** - Full project overview
-- **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Detailed setup instructions
-- **[prisma/ERD.md](prisma/ERD.md)** - Schema documentation with ERD
-- **[docs/SCHEMA_REFERENCE.md](docs/SCHEMA_REFERENCE.md)** - Quick reference
-- **[docs/DATABASE.md](docs/DATABASE.md)** - Comprehensive database guide
-
-## Support
-
-Need help? Check the documentation above or review:
-- Prisma docs: https://www.prisma.io/docs
-- PostgreSQL docs: https://www.postgresql.org/docs
-
-## Production Deployment
-
-For production setup, see **SETUP_GUIDE.md** section on Production Deployment.
-
----
-
-**Ready to build!** 🚀
+- Read [README.md](README.md) for full documentation
+- Check [INSTALLATION.md](INSTALLATION.md) for detailed setup
+- See [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for API reference
+- Review [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for system design

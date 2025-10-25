@@ -2,302 +2,203 @@
 
 ## Prerequisites
 
-- **Python 3.11+** - Backend runtime
-- **Node.js 18+** - Frontend runtime (for React app)
-- **OpenAI API Key** - Required for AI features
+- Node.js 20+ and pnpm 8+
+- Docker 24+
+- PostgreSQL 15+ (or use Docker)
+- AWS CLI v2 (for production)
+- Terraform 1.5+ (for infrastructure)
+- kubectl 1.28+ (for Kubernetes)
 
-## Quick Start (Linux/Mac)
+## Quick Start
 
-### 1. Clone and Setup Backend
-
-```bash
-# Navigate to project directory
-cd expense-management
-
-# Run the setup script
-chmod +x run.sh
-./run.sh
-```
-
-This will:
-- Create a virtual environment
-- Install Python dependencies
-- Create `.env` file from template
-- Start the backend server
-
-### 2. Configure OpenAI API Key
-
-Edit the `.env` file and add your real API key:
+### 1. Clone Repository
 
 ```bash
-nano .env
+git clone https://github.com/your-org/invoice-saas.git
+cd invoice-saas
 ```
 
-Change:
-```
-OPENAI_API_KEY=sk-test-placeholder-key-replace-with-real-key
-```
-
-To:
-```
-OPENAI_API_KEY=your-actual-openai-api-key
-```
-
-### 3. Setup and Run Frontend
-
-In a new terminal:
+### 2. Install Dependencies
 
 ```bash
-cd frontend
-npm install
-npm start
+pnpm install
 ```
 
-The frontend will be available at: `http://localhost:3000`
+### 3. Configure Environment
 
----
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+```
 
-## Manual Installation (Windows)
+Required environment variables:
+- `DATABASE_URL` - PostgreSQL connection string
+- `JWT_SECRET` - Secret for JWT signing
+- `REFRESH_TOKEN_SECRET` - Secret for refresh tokens
+- `OPENAI_API_KEY` - For AI features (optional)
 
-### Backend
+### 4. Start Infrastructure Services
 
-```powershell
-# Create virtual environment
-python -m venv venv
+Using Docker Compose:
 
-# Activate virtual environment
-.\venv\Scripts\activate
+```bash
+docker-compose up -d postgres redis localstack
+```
 
-# Install dependencies
-pip install -r requirements.txt
+### 5. Run Database Migrations
 
-# Create .env file
-copy .env.example .env
+```bash
+pnpm --filter @invoice-saas/invoice-service prisma:migrate:deploy
+pnpm --filter @invoice-saas/invoice-service prisma:generate
+```
 
-# Edit .env and add your OpenAI API key
+### 6. Start Development Servers
 
-# Run server
-python main.py
+```bash
+# Start all services
+pnpm dev
+```
+
+Services will be available at:
+- Frontend: http://localhost:3000
+- API Gateway: http://localhost:3000/api
+- API Documentation: http://localhost:3000/api-docs
+
+## Manual Setup
+
+### Backend Services
+
+Start each service individually:
+
+```bash
+# API Gateway
+pnpm --filter @invoice-saas/api-gateway dev
+
+# Invoice Service
+pnpm --filter @invoice-saas/invoice-service dev
+
+# User Service
+pnpm --filter @invoice-saas/user-service dev
+
+# Payment Service
+pnpm --filter @invoice-saas/payment-service dev
 ```
 
 ### Frontend
 
-```powershell
-cd frontend
-npm install
-npm start
-```
-
----
-
-## Docker Installation
-
-### Using Docker Compose
-
-1. Edit `.env` file with your OpenAI API key
-
-2. Run:
 ```bash
-docker-compose up --build
+cd apps/web
+pnpm dev
 ```
 
-This will start both backend and frontend services.
+## Production Deployment
 
-### Using Docker (Backend Only)
+### 1. Deploy Infrastructure
 
 ```bash
-# Build image
-docker build -t expense-api .
-
-# Run container
-docker run -p 8000:8000 \
-  -e OPENAI_API_KEY=your-key \
-  -v $(pwd)/uploads:/app/uploads \
-  -v $(pwd)/expenses.db:/app/expenses.db \
-  expense-api
+cd infrastructure/terraform
+terraform init
+terraform plan -var-file="environments/prod/terraform.tfvars"
+terraform apply
 ```
 
----
+### 2. Build and Push Docker Images
+
+```bash
+pnpm run docker:build
+pnpm run docker:push
+```
+
+### 3. Deploy to Kubernetes
+
+```bash
+kubectl apply -k infrastructure/kubernetes/overlays/prod
+```
+
+### 4. Verify Deployment
+
+```bash
+kubectl get pods -n invoice-saas
+kubectl get svc -n invoice-saas
+```
+
+## Troubleshooting
+
+### Database Connection Issues
+
+```bash
+# Check PostgreSQL is running
+docker ps | grep postgres
+
+# Test connection
+psql $DATABASE_URL
+
+# Check logs
+docker logs postgres
+```
+
+### Port Conflicts
+
+```bash
+# Find process using port
+lsof -ti:3000 | xargs kill -9
+
+# Or change port in .env
+PORT=3001 pnpm dev
+```
+
+### Migration Failures
+
+```bash
+# Check migration status
+pnpm --filter @invoice-saas/invoice-service prisma:migrate:status
+
+# Reset database (WARNING: deletes all data)
+pnpm --filter @invoice-saas/invoice-service prisma:migrate:reset
+
+# Regenerate Prisma client
+pnpm --filter @invoice-saas/invoice-service prisma:generate
+```
+
+### Missing Dependencies
+
+```bash
+# Clean install
+rm -rf node_modules pnpm-lock.yaml
+pnpm install
+
+# Clear cache
+pnpm store prune
+```
 
 ## Verification
 
-### Test Backend
+### Test Backend Health
 
 ```bash
-# Run test suite
-python test_api.py
+curl http://localhost:3000/health
+curl http://localhost:3000/api/health
+```
 
-# Or manually test
-curl http://localhost:8000/
-curl http://localhost:8000/api/categories
+### Run Tests
+
+```bash
+# All tests
+pnpm run test:all
+
+# Specific suites
+pnpm run test:unit
+pnpm run test:integration
+pnpm run test:e2e
 ```
 
 ### Access API Documentation
 
-Open in browser:
-- Interactive API docs: `http://localhost:8000/docs`
-- Alternative docs: `http://localhost:8000/redoc`
-
----
-
-## Project Structure
-
-```
-expense-management/
-├── main.py                 # FastAPI application
-├── database.py            # Database models
-├── schemas.py             # Pydantic schemas
-├── ai_service.py          # OpenAI integration
-├── test_api.py            # Test suite
-├── requirements.txt       # Python dependencies
-├── .env                   # Environment variables (create from .env.example)
-├── run.sh                 # Startup script
-├── uploads/               # File storage (created automatically)
-├── expenses.db            # SQLite database (created automatically)
-├── frontend/              # React frontend
-│   ├── src/
-│   │   ├── App.tsx        # Main app component
-│   │   ├── types.ts       # TypeScript types
-│   │   ├── api.ts         # API client
-│   │   └── components/    # React components
-│   ├── package.json       # Node dependencies
-│   └── public/            # Static files
-└── docs/
-    ├── README.md          # Main documentation
-    ├── API_DOCUMENTATION.md
-    └── USAGE_EXAMPLES.md
-```
-
----
-
-## Environment Variables
-
-### Backend (.env)
-
-```bash
-# Required
-OPENAI_API_KEY=your-openai-api-key
-
-# Optional (defaults provided)
-DATABASE_URL=sqlite:///./expenses.db
-UPLOAD_DIR=./uploads
-```
-
-### Frontend (.env)
-
-```bash
-# Optional (defaults to http://localhost:8000)
-REACT_APP_API_URL=http://localhost:8000
-```
-
----
-
-## Troubleshooting
-
-### "OpenAI API key not configured"
-
-**Problem:** The `.env` file is missing or doesn't have a valid API key.
-
-**Solution:**
-1. Ensure `.env` file exists in the project root
-2. Add your OpenAI API key to `.env`
-3. Restart the backend server
-
-### "Module not found" errors
-
-**Problem:** Dependencies not installed or wrong Python version.
-
-**Solution:**
-```bash
-# Ensure you're in virtual environment
-source venv/bin/activate  # Linux/Mac
-.\venv\Scripts\activate   # Windows
-
-# Reinstall dependencies
-pip install -r requirements.txt
-```
-
-### Port already in use
-
-**Problem:** Port 8000 (backend) or 3000 (frontend) is already in use.
-
-**Solution:**
-```bash
-# Find and kill process using the port
-# Linux/Mac:
-lsof -ti:8000 | xargs kill -9
-lsof -ti:3000 | xargs kill -9
-
-# Or change the port in the code
-# Backend: Edit main.py, change port in uvicorn.run()
-# Frontend: Set PORT environment variable
-PORT=3001 npm start
-```
-
-### Database locked error
-
-**Problem:** SQLite database is locked (multiple processes accessing it).
-
-**Solution:**
-1. Stop all backend processes
-2. Delete `expenses.db` (data will be lost)
-3. Restart backend (database will be recreated)
-
-### Frontend can't connect to backend
-
-**Problem:** CORS or network issues.
-
-**Solution:**
-1. Ensure backend is running on `http://localhost:8000`
-2. Check CORS settings in `main.py`
-3. Verify frontend `.env` has correct `REACT_APP_API_URL`
-
----
-
-## Development Tips
-
-### Hot Reload
-
-- **Backend**: Use `uvicorn main:app --reload` for auto-reload on code changes
-- **Frontend**: `npm start` already includes hot reload
-
-### Database Reset
-
-```bash
-# Backup current database
-cp expenses.db expenses.db.backup
-
-# Delete database
-rm expenses.db
-
-# Restart backend (creates fresh database)
-python main.py
-```
-
-### Viewing Database
-
-```bash
-# Install sqlite3
-# Linux:
-sudo apt install sqlite3
-
-# Mac:
-brew install sqlite3
-
-# View database
-sqlite3 expenses.db
-.tables
-.schema expenses
-SELECT * FROM expenses;
-.quit
-```
-
----
+Open http://localhost:3000/api-docs in your browser.
 
 ## Next Steps
 
-1. ✅ Complete installation
-2. ✅ Verify backend and frontend are running
-3. 📖 Read [USAGE_EXAMPLES.md](./USAGE_EXAMPLES.md) for how to use the system
-4. 📖 Read [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for API reference
-5. 🚀 Start creating expenses with AI assistance!
+1. Review [README.md](README.md) for project overview
+2. Check [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for API details
+3. See [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) for production setup
+4. Explore [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for system design
