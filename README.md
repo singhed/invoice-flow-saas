@@ -5,31 +5,31 @@
 [![AWS](https://img.shields.io/badge/AWS-Infrastructure-orange)](https://aws.amazon.com)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-EKS-blue)](https://kubernetes.io)
 
-A complete, production-ready invoice management SaaS application built with microservices architecture on AWS infrastructure. Features include automated invoice generation, PDF creation, payment processing, email notifications, and comprehensive monitoring.
+A production-ready invoice management SaaS application built with microservices architecture on AWS infrastructure. Features include automated invoice generation, PDF creation, payment processing, email notifications, and comprehensive monitoring.
 
-## 🚀 Features
+## Features
 
 ### Core Functionality
-- ✅ **Invoice Management**: Create, read, update, delete invoices
-- ✅ **PDF Generation**: Automatic PDF creation and S3 storage
-- ✅ **Payment Processing**: Stripe integration with webhook handling
-- ✅ **Email Notifications**: Personalized AWS SES gratitude emails with Shopify order context
-- ✅ **User Authentication**: JWT-based auth with RBAC
-- ✅ **Real-time Updates**: WebSocket support for status changes
-- ✅ **Search & Filtering**: Advanced invoice search capabilities
-- ✅ **Dashboard Analytics**: Invoice metrics and reporting
+- Invoice Management: Create, read, update, delete invoices
+- PDF Generation: Automatic PDF creation and S3 storage
+- Payment Processing: Stripe integration with webhook handling
+- Email Notifications: AWS SES emails with Shopify order context
+- User Authentication: JWT-based auth with RBAC
+- Real-time Updates: WebSocket support for status changes
+- Search & Filtering: Advanced invoice search capabilities
+- Dashboard Analytics: Invoice metrics and reporting
 
 ### Infrastructure
-- ✅ **Multi-AZ High Availability**: 99.9% uptime SLA
-- ✅ **Auto-scaling**: Horizontal pod autoscaling (HPA) on all services
-- ✅ **Load Balancing**: AWS Application Load Balancer
-- ✅ **Caching**: Redis cluster for performance optimization
-- ✅ **Message Queuing**: SQS/SNS for async processing
-- ✅ **Monitoring**: CloudWatch dashboards and alarms
-- ✅ **Security**: VPC isolation, encryption at rest and in transit
-- ✅ **CI/CD**: Automated testing and deployment
+- Multi-AZ High Availability: 99.9% uptime SLA
+- Auto-scaling: Horizontal pod autoscaling (HPA) on all services
+- Load Balancing: AWS Application Load Balancer
+- Caching: Redis cluster for performance optimization
+- Message Queuing: SQS/SNS for async processing
+- Monitoring: CloudWatch dashboards and alarms
+- Security: VPC isolation, encryption at rest and in transit
+- CI/CD: Automated testing and deployment
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Architecture](#architecture)
 - [Technology Stack](#technology-stack)
@@ -40,14 +40,11 @@ A complete, production-ready invoice management SaaS application built with micr
 - [Deployment](#deployment)
 - [Testing](#testing)
 - [API Documentation](#api-documentation)
-- [Monitoring](#monitoring)
-- [Cost Analysis](#cost-analysis)
-- [Contributing](#contributing)
 - [License](#license)
 
-## 🏗️ Architecture
+## Architecture
 
-The application follows a microservices architecture deployed on AWS EKS with the following components:
+The application follows a microservices architecture deployed on AWS EKS:
 
 ```
 Frontend (Render) → ALB → API Gateway → Microservices (EKS)
@@ -67,68 +64,44 @@ Frontend (Render) → ALB → API Gateway → Microservices (EKS)
                                     └────────────────┘
 ```
 
-**Detailed Architecture**: See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture documentation.
 
-## 💌 Invoice Email Flow
-
-```mermaid
-sequenceDiagram
-    participant Shopify as Shopify Store
-    participant InvoiceSvc as Invoice Service
-    participant SES as AWS SES
-    participant Customer as Customer Inbox
-    Shopify->>InvoiceSvc: Order paid webhook (orderId)
-    InvoiceSvc->>Shopify: Fetch order JSON
-    InvoiceSvc->>InvoiceSvc: Generate PDF + gratitude email
-    InvoiceSvc->>SES: SendRawEmail (invoice.pdf)
-    SES->>Customer: Deliver thankful message
-```
-
-The invoice service now pulls Shopify order data, renders a polished PDF, and delivers a gratitude-rich email via AWS SES. You can reuse the Mermaid diagram above by calling `GET /invoices/email/diagram`.
-
-> 📎 **Resources**
-> - [Service deep dive](docs/services/invoice-service.md)
-> - [Sample invoice PDF](docs/assets/sample-invoice.pdf)
-> - [Sample invoice image](docs/assets/sample-invoice.png)
-> - [Colourful preview gallery](docs/services/invoice-service.md#device-preview-gallery)
-> - [Email client renderings](docs/services/invoice-service.md#email-client-renderings)
-
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Backend
-- **Runtime**: Node.js 20 LTS
-- **Language**: TypeScript
-- **Framework**: Express.js
-- **ORM**: Prisma
-- **Validation**: Joi
-- **Authentication**: JWT
+- Runtime: Node.js 20 LTS
+- Language: TypeScript
+- Framework: Express.js
+- ORM: Prisma
+- Validation: Joi
+- Authentication: JWT
 
 ### Frontend
-- **Framework**: React 18
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **State**: React Context
-- **Testing**: React Testing Library, Playwright
+- Framework: React 18
+- Language: TypeScript
+- Styling: Tailwind CSS
+- State: React Context
+- Testing: React Testing Library, Playwright
 
 ### Infrastructure
-- **Cloud**: AWS (VPC, EKS, RDS, ElastiCache, S3, SQS, SNS)
-- **Container Orchestration**: Kubernetes (EKS)
-- **IaC**: Terraform
-- **CI/CD**: GitHub Actions
+- Cloud: AWS (VPC, EKS, RDS, ElastiCache, S3, SQS, SNS)
+- Container Orchestration: Kubernetes (EKS)
+- IaC: Terraform
+- CI/CD: GitHub Actions
 
 ### Databases
-- **Primary**: PostgreSQL 15 (Multi-AZ)
-- **Cache**: Redis 7 (Cluster Mode)
-- **Storage**: S3 (with lifecycle policies)
+- Primary: PostgreSQL 15 (Multi-AZ)
+- Cache: Redis 7 (Cluster Mode)
+- Storage: S3 (with lifecycle policies)
 
 ### DevOps
-- **Containerization**: Docker
-- **Orchestration**: Kubernetes + Helm
-- **Monitoring**: CloudWatch, Prometheus
-- **Logging**: CloudWatch Logs
-- **Tracing**: AWS X-Ray
+- Containerization: Docker
+- Orchestration: Kubernetes + Helm
+- Monitoring: CloudWatch, Prometheus
+- Logging: CloudWatch Logs
+- Tracing: AWS X-Ray
 
-## 📦 Prerequisites
+## Prerequisites
 
 - Node.js 20+ and pnpm 8+
 - Docker 24+
@@ -137,7 +110,7 @@ The invoice service now pulls Shopify order data, renders a polished PDF, and de
 - kubectl 1.28+
 - Git
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Clone the Repository
 
@@ -173,7 +146,7 @@ pnpm --filter @invoice-saas/invoice-service dev
 ### 5. Run Tests
 
 ```bash
-# Run all tests with retry logic
+# Run all tests
 pnpm run test:all
 
 # Or run specific test suites
@@ -195,9 +168,9 @@ terraform apply
 kubectl apply -k infrastructure/kubernetes/overlays/prod
 ```
 
-**Detailed Setup**: See [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)
+See [INSTALLATION.md](INSTALLATION.md) for detailed setup instructions.
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 .
@@ -216,43 +189,40 @@ kubectl apply -k infrastructure/kubernetes/overlays/prod
 │   ├── notification-service/  # Email/SMS notifications
 │   ├── user-service/          # Authentication & users
 │   └── worker-service/        # Background jobs
-├── frontend/                   # React application
+├── apps/
+│   ├── web/                   # React frontend application
+│   └── api/                   # Unified API layer
 ├── packages/
 │   └── shared/                # Shared utilities
 ├── scripts/                    # Automation scripts
-│   └── test-runner.sh         # Test automation with retry
 ├── docs/                       # Documentation
 │   ├── ARCHITECTURE.md        # System architecture
 │   ├── DEPLOYMENT_GUIDE.md    # Deployment instructions
 │   ├── COST_ANALYSIS.md       # Cost breakdown
-│   └── API_DOCUMENTATION.md   # API reference
+│   └── DATABASE.md            # Database documentation
 ├── .github/
 │   └── workflows/             # CI/CD pipelines
 ├── package.json               # Root package.json
 └── README.md                  # This file
 ```
 
-## 💻 Development
+## Development
 
 ### Local Development Setup
 
-1. **Start Infrastructure Services**:
+1. Start Infrastructure Services:
 ```bash
-# Using Docker Compose
 docker-compose up -d postgres redis localstack
 ```
 
-2. **Run Database Migrations**:
+2. Run Database Migrations:
 ```bash
 pnpm --filter @invoice-saas/invoice-service prisma:migrate
 ```
 
-3. **Start Development Servers**:
+3. Start Development Servers:
 ```bash
 # All services
-pnpm dev
-
-# Watch mode with hot reload
 pnpm dev
 ```
 
@@ -280,7 +250,7 @@ pnpm dev
 NODE_OPTIONS='--inspect' pnpm --filter @invoice-saas/invoice-service dev
 ```
 
-## 🚀 Deployment
+## Deployment
 
 ### Production Deployment
 
@@ -310,15 +280,12 @@ kubectl rollout undo deployment/invoice-service -n invoice-saas
 ### Health Checks
 
 ```bash
-# Check all services
 kubectl exec -n invoice-saas deployment/api-gateway -- curl http://localhost:3000/health
 ```
 
-## 🧪 Testing
+## Testing
 
-### Automated Testing with Retry Logic
-
-The project includes comprehensive automated testing with built-in retry logic:
+### Automated Testing
 
 ```bash
 # Run complete test suite
@@ -332,7 +299,7 @@ The test runner automatically:
 4. Validates Kubernetes manifests
 5. Builds Docker images
 6. Runs E2E tests
-7. **Retries failed tests up to 3 times**
+7. Retries failed tests up to 3 times
 8. Generates detailed failure reports
 
 ### Manual Testing
@@ -361,11 +328,39 @@ k6 run scripts/load-test.js
 artillery run scripts/load-test.yml
 ```
 
-## 📚 API Documentation
+## API Documentation
 
 API documentation is available at `/api-docs` when running the API Gateway.
 
-**Detailed API Reference**: See [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md)
+See [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for detailed API reference.
+
+### Authentication
+
+Endpoints:
+- POST /api/auth/register - Create a new user and receive a JWT
+- POST /api/auth/login - Authenticate and receive a JWT
+- POST /api/auth/refresh - Rotate refresh token and return new access token
+- POST /api/auth/logout - Revoke refresh token
+- GET /api/auth/me - Get authenticated user profile
+
+Tokens:
+- Access: JWT (HS256) signed with JWT_SECRET, expires in 15 minutes
+- Refresh: JWT (HS256) signed with REFRESH_TOKEN_SECRET, stored as HttpOnly cookie, expires in 7 days
+
+Rate Limits:
+- Global: 100 requests / 15 minutes per IP
+- Auth endpoints: 10 requests / 15 minutes per IP + email
+
+### Security
+
+The platform implements multiple security layers:
+- CSRF Protection with double-submit tokens
+- Input Validation & Sanitization using Joi schemas
+- XSS mitigation
+- HTTP Parameter Pollution (HPP) blocking
+- Secure headers via Helmet (HSTS, X-Content-Type-Options, etc.)
+- CORS restricted to ALLOWED_ORIGINS
+- Rate limiting on all endpoints
 
 ### Sample API Calls
 
@@ -400,195 +395,6 @@ curl -X POST http://localhost:3000/api/invoices \
   }'
 ```
 
-### Authentication & Rate Limiting
+## License
 
-This repository ships with a working authentication flow behind the API Gateway and a strict rate limiting policy:
-
-- Endpoints (via API Gateway):
-  - POST /api/auth/register → Create a new user and receive a JWT
-  - POST /api/auth/login → Authenticate and receive a JWT
-  - POST /api/auth/refresh → Rotate refresh token cookie and return a new access token
-  - POST /api/auth/logout → Revoke refresh token and clear cookie
-  - GET /api/auth/me → Get the authenticated user's profile
-- Tokens:
-  - Access: JWT (HS256) signed with JWT_SECRET, provided as Authorization: Bearer <token>, expires in 15 minutes
-  - Refresh: JWT (HS256) signed with REFRESH_TOKEN_SECRET, stored as HttpOnly SameSite=Lax cookie `rt` (scoped to /api/auth), expires in 7 days and is rotated on each refresh
-- Rate limits:
-  - Global: 100 requests / 15 minutes per IP
-  - Auth endpoints: 10 requests / 15 minutes per IP + email combination
-
-Local development quickstart:
-
-```bash
-# 1. Install dependencies
-pnpm install
-
-# 2. Copy env and edit secrets
-cp .env.example .env
-
-# 3. Start services
-# API Gateway (http://localhost:3000)
-pnpm --filter @invoice-saas/api-gateway dev
-
-# User Service with auth endpoints (http://localhost:3003)
-pnpm --filter @invoice-saas/user-service dev
-
-# Web frontend (http://localhost:3000 by Next default, if run separately in /apps/web)
-pnpm --filter web dev
-```
-
-Frontend auth pages are available at:
-- /auth/register - create an account
-- /auth/login - sign in and store JWT in localStorage
-
-See docs/services/auth-service.md for full details of the implementation.
-
-### Security Hardening
-
-The platform implements multiple layers of defense to minimize vulnerabilities:
-
-- CSRF Protection
-  - Double-submit token via GET /api/auth/csrf-token and X-CSRF-Token header on POSTs
-  - Strict Origin checks at the API Gateway for unauthenticated state-changing auth endpoints
-- Input Validation & Sanitization
-  - Strong schema validation with Joi on all auth inputs (length, format, complexity)
-  - XSS mitigation by sanitizing free-text fields on input
-  - HTTP Parameter Pollution (HPP) blocked at both gateway and user-service
-- Secure Defaults
-  - Helmet for secure headers (HSTS, X-Content-Type-Options, etc.)
-  - CORS restricted to ALLOWED_ORIGINS with explicit header allow-list
-  - Rate limiting: global and per-identity for auth endpoints
-  - JWT signed with JWT_SECRET, 1h expiration
-- Operational Practices
-  - Centralized error handling without leaking sensitive details
-  - x-powered-by disabled to reduce fingerprinting
-
-Note: The provided auth service stores users in-memory for demo purposes. For production, use a database with parameterized queries, per-user password hashing (e.g., Argon2id), refresh tokens, and full device/session management.
-
-## 📊 Monitoring
-
-### CloudWatch Dashboards
-
-- **Application Dashboard**: CPU, memory, request rates
-- **Database Dashboard**: Connections, query performance
-- **Cache Dashboard**: Hit rates, evictions
-- **Queue Dashboard**: Message counts, processing times
-
-Access: AWS Console → CloudWatch → Dashboards → `invoice-saas-prod-dashboard`
-
-### Logs
-
-```bash
-# Application logs
-kubectl logs -n invoice-saas -l app=invoice-service --tail=100 -f
-
-# CloudWatch logs
-aws logs tail /aws/eks/invoice-saas-prod/application --follow
-```
-
-### Metrics
-
-Key metrics monitored:
-- API response times (p50, p95, p99)
-- Error rates (4xx, 5xx)
-- Database query performance
-- Cache hit rates
-- Queue depths
-- Resource utilization
-
-### Alarms
-
-Critical alarms configured for:
-- High error rates (>5%)
-- Slow response times (p95 >1s)
-- Database CPU >80%
-- Low disk space
-- Node health issues
-
-## 💰 Cost Analysis
-
-### Monthly Cost Breakdown
-
-| Category | Cost | Optimized Cost |
-|----------|------|----------------|
-| **Compute (EKS)** | $467 | $280 (with Spot) |
-| **Database (RDS)** | $438 | $253 (with RI) |
-| **Cache (Redis)** | $657 | $357 (with RI) |
-| **Networking** | $165 | $100 |
-| **Storage** | $121 | $99 |
-| **Other** | $90 | $90 |
-| **Total** | **~$1,938** | **~$1,179** |
-
-**Annual Budget**: ~$14,148 (optimized) / ~$23,256 (unoptimized)
-
-**Detailed Analysis**: See [docs/COST_ANALYSIS.md](docs/COST_ANALYSIS.md)
-
-### Cost Optimization
-
-- Use Spot Instances for 70% of workload (42% savings)
-- Purchase Reserved Instances for RDS/Redis (40-45% savings)
-- Implement S3 lifecycle policies (30% savings on storage)
-- Use VPC endpoints to reduce NAT costs (20% savings)
-
-## 🤝 Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
-
-### Development Workflow
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Code Style
-
-- Follow TypeScript best practices
-- Use ESLint and Prettier
-- Write tests for new features
-- Update documentation
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Built with [Express.js](https://expressjs.com/)
-- Powered by [AWS](https://aws.amazon.com/)
-- Orchestrated with [Kubernetes](https://kubernetes.io/)
-- Infrastructure managed by [Terraform](https://www.terraform.io/)
-
-## 📞 Support
-
-- **Documentation**: [docs/](docs/)
-- **Issues**: [GitHub Issues](https://github.com/your-org/invoice-saas/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/invoice-saas/discussions)
-
-## 🗺️ Roadmap
-
-- [ ] Multi-tenancy support
-- [ ] Advanced analytics dashboard
-- [ ] Recurring invoice automation
-- [ ] Multi-currency support
-- [ ] Mobile applications (iOS/Android)
-- [ ] Webhook integrations
-- [ ] Advanced reporting (PDF/Excel exports)
-- [ ] Invoice templates customization
-- [ ] Payment gateway integrations (PayPal, Square)
-- [ ] Multi-language support
-
-## 📈 Project Status
-
-- ✅ **Infrastructure**: Production-ready
-- ✅ **Backend Services**: Fully implemented
-- ✅ **Frontend**: Basic implementation
-- ✅ **Testing**: Comprehensive coverage
-- ✅ **CI/CD**: Automated pipelines
-- ✅ **Monitoring**: CloudWatch integration
-- ✅ **Documentation**: Complete
-
----
-
-**Built with ❤️ for production-scale invoice management**
+MIT License - see [LICENSE](LICENSE) file for details.

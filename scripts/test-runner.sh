@@ -26,10 +26,10 @@ run_test() {
         fi
         
         if eval "$test_command" > "$LOG_DIR/${test_name}_${retry}.log" 2>&1; then
-            log_message "✓ PASSED: $test_name"
+            log_message "[PASS] $test_name"
             return 0
         else
-            log_message "✗ FAILED: $test_name (attempt $((retry + 1))/$MAX_RETRIES)"
+            log_message "[FAIL] $test_name (attempt $((retry + 1))/$MAX_RETRIES)"
             retry=$((retry + 1))
             
             if [ $retry -lt $MAX_RETRIES ]; then
@@ -40,7 +40,7 @@ run_test() {
     done
     
     FAILED_TESTS+=("$test_name")
-    log_message "✗ FAILED AFTER $MAX_RETRIES RETRIES: $test_name"
+    log_message "[FAIL] AFTER $MAX_RETRIES RETRIES: $test_name"
     return 1
 }
 
