@@ -161,7 +161,7 @@ export default async function HomePage() {
           <div className="rounded-lg border border-border bg-card p-5 shadow">
             <div className="mb-3 flex items-center gap-2">
               <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30">
-                💳
+                $
               </span>
               <h3 className="font-semibold">{t("home.features.items.expense_tracking_title")}</h3>
             </div>
@@ -172,7 +172,7 @@ export default async function HomePage() {
           <div className="rounded-lg border border-border bg-card p-5 shadow">
             <div className="mb-3 flex items-center gap-2">
               <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30">
-                ✨
+                *
               </span>
               <h3 className="font-semibold">{t("home.features.items.ai_categorization_title")}</h3>
             </div>
@@ -183,7 +183,7 @@ export default async function HomePage() {
           <div className="rounded-lg border border-border bg-card p-5 shadow">
             <div className="mb-3 flex items-center gap-2">
               <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30">
-                📎
+                +
               </span>
               <h3 className="font-semibold">{t("home.features.items.attachments_title")}</h3>
             </div>
@@ -194,7 +194,7 @@ export default async function HomePage() {
           <div className="rounded-lg border border-border bg-card p-5 shadow">
             <div className="mb-3 flex items-center gap-2">
               <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30">
-                🔍
+                ?
               </span>
               <h3 className="font-semibold">{t("home.features.items.smart_search_title")}</h3>
             </div>
@@ -205,7 +205,7 @@ export default async function HomePage() {
           <div className="rounded-lg border border-border bg-card p-5 shadow">
             <div className="mb-3 flex items-center gap-2">
               <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30">
-                📊
+                #
               </span>
               <h3 className="font-semibold">{t("home.features.items.analytics_title")}</h3>
             </div>
@@ -216,7 +216,7 @@ export default async function HomePage() {
           <div className="rounded-lg border border-border bg-card p-5 shadow">
             <div className="mb-3 flex items-center gap-2">
               <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30">
-                🔐
+                !
               </span>
               <h3 className="font-semibold">{t("home.features.items.privacy_title")}</h3>
             </div>

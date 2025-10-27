@@ -171,7 +171,6 @@ export default function InvoicesPage() {
         <Card>
           <CardContent className="py-12">
             <EmptyState
-              icon="⚠️"
               title={t("invoices.error_title")}
               description={error}
               action={{
@@ -197,7 +196,6 @@ export default function InvoicesPage() {
         <Card>
           <CardContent className="py-12">
             <EmptyState
-              icon="📄"
               title={t("invoices.empty_title")}
               description={t("invoices.empty_desc")}
               action={{
@@ -285,7 +283,6 @@ export default function InvoicesPage() {
         <Card>
           <CardContent className="py-12">
             <EmptyState
-              icon="🔍"
               title="No invoices found"
               description="Try adjusting your search or filters to find what you're looking for."
               action={{

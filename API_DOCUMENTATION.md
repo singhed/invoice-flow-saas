@@ -1,254 +1,361 @@
-# Expense Management API Documentation
+# API Documentation
 
 ## Base URL
+
 ```
-http://localhost:8000
+http://localhost:3000/api
 ```
 
-## Endpoints
+## Authentication
 
-### Invoice Emails
+Most endpoints require authentication using JWT Bearer tokens.
 
-#### POST `/invoices/email`
-Trigger invoice generation and send a gratitude-rich email with a PDF attachment via AWS SES.
+```bash
+Authorization: Bearer <access_token>
+```
 
-**Request Body:**
+## Authentication Endpoints
+
+### POST /auth/register
+Register a new user account.
+
+**Request:**
 ```json
 {
-  "orderId": "5342193849132",
-  "recipientEmail": "optional.override@example.com",
-  "personalMessage": "We’re cheering for your Shopify journey!"
+  "email": "user@example.com",
+  "password": "SecurePassword123!",
+  "name": "John Doe"
 }
 ```
 
-**Response:** `202 Accepted`
+**Response:** 201 Created
 ```json
 {
-  "status": "success",
-  "message": "Invoice email sent via AWS SES",
-  "recipientEmail": "merchant@example.com"
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "name": "John Doe"
+  },
+  "token": "eyJhbGc..."
 }
 ```
 
-#### GET `/invoices/email/diagram`
-Returns the Mermaid sequence diagram used in documentation for the invoice email workflow.
+### POST /auth/login
+Authenticate and receive access token.
 
-**Response:** `200 OK`
+**Request:**
 ```json
 {
-  "diagram": "sequenceDiagram..."
+  "email": "user@example.com",
+  "password": "SecurePassword123!"
 }
 ```
 
-### Health Check
-
-#### GET `/`
-Returns API information.
-
-**Response:**
+**Response:** 200 OK
 ```json
 {
-  "message": "Expense Management API",
-  "version": "1.0.0"
+  "token": "eyJhbGc...",
+  "refreshToken": "eyJhbGc...",
+  "expiresIn": 900
 }
 ```
 
----
+### POST /auth/refresh
+Refresh access token using refresh token.
 
-### Categories
-
-#### GET `/api/categories`
-Get list of available expense categories.
-
-**Response:**
+**Request:**
 ```json
 {
-  "categories": [
-    "Travel",
-    "Meals & Entertainment",
-    "Office Supplies",
-    ...
+  "refreshToken": "eyJhbGc..."
+}
+```
+
+**Response:** 200 OK
+```json
+{
+  "token": "eyJhbGc...",
+  "expiresIn": 900
+}
+```
+
+### POST /auth/logout
+Logout and invalidate refresh token.
+
+**Response:** 204 No Content
+
+### GET /auth/me
+Get current user profile.
+
+**Response:** 200 OK
+```json
+{
+  "id": "uuid",
+  "email": "user@example.com",
+  "name": "John Doe",
+  "createdAt": "2024-01-15T10:00:00Z"
+}
+```
+
+## Invoice Endpoints
+
+### POST /invoices
+Create a new invoice.
+
+**Request:**
+```json
+{
+  "clientName": "Acme Corp",
+  "clientEmail": "billing@acme.com",
+  "amount": 1000.00,
+  "currency": "USD",
+  "dueDate": "2024-12-31",
+  "description": "Consulting services",
+  "items": [
+    {
+      "description": "Consulting Services",
+      "quantity": 10,
+      "unitPrice": 100.00
+    }
   ]
 }
 ```
 
----
-
-### Expenses
-
-#### POST `/api/expenses`
-Create a new expense.
-
-**Request Body:**
+**Response:** 201 Created
 ```json
 {
-  "description": "Lunch meeting with client",
-  "amount": 45.50,
-  "date": "2024-01-15T12:00:00Z",
-  "category": "Meals & Entertainment",
-  "client_notes": "Business development meeting",
-  "request_ai_suggestion": true
+  "id": "uuid",
+  "invoiceNumber": "INV-2024-001",
+  "clientName": "Acme Corp",
+  "clientEmail": "billing@acme.com",
+  "amount": 1000.00,
+  "currency": "USD",
+  "status": "draft",
+  "dueDate": "2024-12-31",
+  "createdAt": "2024-01-15T10:00:00Z",
+  "pdfUrl": "https://s3.amazonaws.com/..."
 }
 ```
 
-**Response:** `201 Created`
-```json
-{
-  "id": 1,
-  "description": "Lunch meeting with client",
-  "amount": 45.50,
-  "date": "2024-01-15T12:00:00Z",
-  "category": "Meals & Entertainment",
-  "client_notes": "Business development meeting",
-  "created_at": "2024-01-15T12:00:00Z",
-  "updated_at": "2024-01-15T12:00:00Z",
-  "attachments": [],
-  "ai_suggestions": []
-}
-```
-
-#### GET `/api/expenses`
-List all expenses.
+### GET /invoices
+List all invoices.
 
 **Query Parameters:**
-- `skip` (optional): Number of records to skip (default: 0)
-- `limit` (optional): Maximum number of records to return (default: 100)
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 20, max: 100)
+- `status` (optional): Filter by status (draft, sent, paid, overdue, cancelled)
+- `search` (optional): Search by client name or invoice number
 
-**Response:** `200 OK`
+**Response:** 200 OK
 ```json
-[
-  {
-    "id": 1,
-    "description": "Lunch meeting with client",
-    ...
+{
+  "invoices": [
+    {
+      "id": "uuid",
+      "invoiceNumber": "INV-2024-001",
+      "clientName": "Acme Corp",
+      "amount": 1000.00,
+      "status": "draft",
+      "dueDate": "2024-12-31",
+      "createdAt": "2024-01-15T10:00:00Z"
+    }
+  ],
+  "pagination": {
+    "total": 50,
+    "page": 1,
+    "limit": 20,
+    "pages": 3
   }
-]
-```
-
-#### GET `/api/expenses/{expense_id}`
-Get a specific expense.
-
-**Response:** `200 OK`
-```json
-{
-  "id": 1,
-  "description": "Lunch meeting with client",
-  ...
 }
 ```
 
-#### PUT `/api/expenses/{expense_id}`
-Update an expense.
+### GET /invoices/:id
+Get a specific invoice.
 
-**Request Body:**
+**Response:** 200 OK
 ```json
 {
-  "description": "Updated description",
-  "amount": 50.00,
-  "category": "Travel"
+  "id": "uuid",
+  "invoiceNumber": "INV-2024-001",
+  "clientName": "Acme Corp",
+  "clientEmail": "billing@acme.com",
+  "amount": 1000.00,
+  "currency": "USD",
+  "status": "draft",
+  "dueDate": "2024-12-31",
+  "items": [
+    {
+      "description": "Consulting Services",
+      "quantity": 10,
+      "unitPrice": 100.00,
+      "total": 1000.00
+    }
+  ],
+  "createdAt": "2024-01-15T10:00:00Z",
+  "updatedAt": "2024-01-15T10:00:00Z",
+  "pdfUrl": "https://s3.amazonaws.com/..."
 }
 ```
 
-**Response:** `200 OK`
-```json
-{
-  "id": 1,
-  "description": "Updated description",
-  ...
-}
-```
-
-#### DELETE `/api/expenses/{expense_id}`
-Delete an expense.
-
-**Response:** `204 No Content`
-
----
-
-### Attachments
-
-#### POST `/api/expenses/{expense_id}/attachments`
-Upload an attachment for an expense.
+### PUT /invoices/:id
+Update an invoice.
 
 **Request:**
-- Content-Type: `multipart/form-data`
-- Body: File upload with field name `file`
-
-**Response:** `200 OK`
 ```json
 {
-  "id": 1,
-  "expense_id": 1,
-  "filename": "receipt.pdf",
-  "content_type": "application/pdf",
-  "file_size": 12345,
-  "uploaded_at": "2024-01-15T12:00:00Z"
+  "clientName": "Acme Corporation",
+  "amount": 1200.00,
+  "status": "sent"
 }
 ```
 
-#### GET `/api/expenses/{expense_id}/attachments/{attachment_id}`
-Download an attachment.
+**Response:** 200 OK
+Returns updated invoice object.
 
-**Response:** `200 OK`
-Returns the file with appropriate Content-Type header.
+### DELETE /invoices/:id
+Delete an invoice.
 
-#### DELETE `/api/expenses/{expense_id}/attachments/{attachment_id}`
-Delete an attachment.
+**Response:** 204 No Content
 
-**Response:** `204 No Content`
+### POST /invoices/:id/send
+Send invoice via email.
 
----
-
-### AI Suggestions
-
-#### POST `/api/expenses/ai-suggest`
-Get AI suggestions for expense categorization and notes.
-
-**Request Body:**
+**Request:**
 ```json
 {
-  "description": "Coffee with potential client",
-  "amount": 12.50
+  "recipientEmail": "billing@acme.com",
+  "message": "Please find attached invoice for services rendered."
 }
 ```
 
-**Response:** `200 OK`
+**Response:** 200 OK
 ```json
 {
-  "category": "Meals & Entertainment",
-  "client_notes": "Client relationship building meeting to discuss potential partnership opportunities."
+  "status": "sent",
+  "sentAt": "2024-01-15T10:00:00Z",
+  "recipientEmail": "billing@acme.com"
 }
 ```
 
-#### POST `/api/expenses/{expense_id}/ai-suggestions/{suggestion_id}/approve`
-Approve or modify an AI suggestion.
+### GET /invoices/:id/pdf
+Download invoice PDF.
 
-**Request Body:**
+**Response:** 200 OK
+Returns PDF file with appropriate Content-Type header.
+
+## Payment Endpoints
+
+### POST /payments
+Record a payment.
+
+**Request:**
 ```json
 {
-  "suggestion_id": 1,
-  "accept_category": true,
-  "accept_notes": true,
-  "custom_category": null,
-  "custom_notes": null
+  "invoiceId": "uuid",
+  "amount": 1000.00,
+  "paymentMethod": "credit_card",
+  "transactionId": "ch_1234567890"
 }
 ```
 
-**Response:** `200 OK`
-Returns the updated expense.
+**Response:** 201 Created
+```json
+{
+  "id": "uuid",
+  "invoiceId": "uuid",
+  "amount": 1000.00,
+  "paymentMethod": "credit_card",
+  "transactionId": "ch_1234567890",
+  "status": "completed",
+  "createdAt": "2024-01-15T10:00:00Z"
+}
+```
 
----
+### GET /payments
+List all payments.
+
+**Query Parameters:**
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 20)
+- `invoiceId` (optional): Filter by invoice ID
+
+**Response:** 200 OK
+```json
+{
+  "payments": [
+    {
+      "id": "uuid",
+      "invoiceId": "uuid",
+      "amount": 1000.00,
+      "status": "completed",
+      "createdAt": "2024-01-15T10:00:00Z"
+    }
+  ],
+  "pagination": {
+    "total": 25,
+    "page": 1,
+    "limit": 20,
+    "pages": 2
+  }
+}
+```
+
+## Analytics Endpoints
+
+### GET /analytics/dashboard
+Get dashboard metrics.
+
+**Response:** 200 OK
+```json
+{
+  "totalRevenue": 50000.00,
+  "totalInvoices": 150,
+  "paidInvoices": 120,
+  "pendingAmount": 15000.00,
+  "overdueAmount": 5000.00,
+  "revenueByMonth": [
+    { "month": "2024-01", "revenue": 10000.00 },
+    { "month": "2024-02", "revenue": 12000.00 }
+  ]
+}
+```
 
 ## Error Responses
 
 All endpoints may return the following error responses:
 
 ### 400 Bad Request
-Invalid request parameters.
+Invalid request parameters or validation errors.
 
 ```json
 {
-  "detail": "Validation error message"
+  "error": "Bad Request",
+  "message": "Validation failed",
+  "details": [
+    {
+      "field": "email",
+      "message": "Invalid email format"
+    }
+  ]
+}
+```
+
+### 401 Unauthorized
+Missing or invalid authentication token.
+
+```json
+{
+  "error": "Unauthorized",
+  "message": "Invalid or expired token"
+}
+```
+
+### 403 Forbidden
+Insufficient permissions.
+
+```json
+{
+  "error": "Forbidden",
+  "message": "You don't have permission to access this resource"
 }
 ```
 
@@ -257,7 +364,19 @@ Resource not found.
 
 ```json
 {
-  "detail": "Expense not found"
+  "error": "Not Found",
+  "message": "Invoice not found"
+}
+```
+
+### 429 Too Many Requests
+Rate limit exceeded.
+
+```json
+{
+  "error": "Too Many Requests",
+  "message": "Rate limit exceeded. Please try again later.",
+  "retryAfter": 60
 }
 ```
 
@@ -266,58 +385,42 @@ Server error.
 
 ```json
 {
-  "detail": "Internal server error"
+  "error": "Internal Server Error",
+  "message": "An unexpected error occurred"
 }
 ```
 
----
+## Rate Limiting
 
-## Database Schema
+- Global: 100 requests per 15 minutes per IP
+- Auth endpoints: 10 requests per 15 minutes per IP + email combination
 
-### expenses
-- `id`: Integer (Primary Key)
-- `description`: String (Required)
-- `amount`: Float (Required)
-- `date`: DateTime
-- `category`: String
-- `client_notes`: Text
-- `created_at`: DateTime
-- `updated_at`: DateTime
+Rate limit headers are included in all responses:
+- `X-RateLimit-Limit`: Maximum requests allowed
+- `X-RateLimit-Remaining`: Remaining requests
+- `X-RateLimit-Reset`: Timestamp when limit resets
 
-### attachments
-- `id`: Integer (Primary Key)
-- `expense_id`: Integer (Foreign Key → expenses.id)
-- `filename`: String
-- `file_path`: String
-- `content_type`: String
-- `file_size`: Integer
-- `uploaded_at`: DateTime
+## Pagination
 
-### ai_suggestions
-- `id`: Integer (Primary Key)
-- `expense_id`: Integer (Foreign Key → expenses.id)
-- `suggested_category`: String
-- `suggested_notes`: Text
-- `was_accepted`: Boolean
-- `user_modified`: Boolean
-- `final_category`: String
-- `final_notes`: Text
-- `created_at`: DateTime
-- `model_used`: String
+List endpoints support pagination with the following parameters:
+- `page`: Page number (starts at 1)
+- `limit`: Items per page (max 100)
 
----
+Paginated responses include:
+```json
+{
+  "data": [...],
+  "pagination": {
+    "total": 150,
+    "page": 1,
+    "limit": 20,
+    "pages": 8
+  }
+}
+```
 
-## Audit Trail
+## API Versioning
 
-The system maintains a complete audit trail of all AI suggestions:
+The API is versioned via the URL path. Current version is v1.
 
-1. **Initial Suggestion**: When an expense is created with `request_ai_suggestion: true`, the AI generates suggestions that are stored in the `ai_suggestions` table.
-
-2. **User Decision**: The system tracks whether the user:
-   - Accepted the AI suggestions (`was_accepted: true`)
-   - Modified the suggestions (`user_modified: true`)
-   - Rejected the suggestions (no approval action)
-
-3. **Final Values**: Both the AI's original suggestions and the user's final choices are stored for compliance and auditing purposes.
-
-This ensures full transparency and traceability of all AI-assisted categorizations.
+Future versions will be accessible at `/api/v2`, etc.
