@@ -252,6 +252,18 @@ curl -X POST http://localhost:3000/api/invoices \
   }'
 ```
 
+## Documentation
+
+Complete documentation available at [docs/INDEX.md](docs/INDEX.md).
+
+**Quick Access**
+- [Documentation Guide](DOCUMENTATION_GUIDE.md) - How to navigate documentation
+- [Documentation Map](.docs-map.md) - Quick navigation reference
+- [API Versioning](docs/API_VERSIONING.md) - Version strategy
+- [Operations Runbook](docs/RUNBOOK.md) - Production operations
+- [SLA](docs/SLA.md) - Service level agreements
+- [Testing Strategy](docs/TESTING_STRATEGY.md) - QA approach
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
