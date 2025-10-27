@@ -25,7 +25,8 @@
     "terraform:init": "cd infrastructure/terraform && terraform init",
     "terraform:plan": "cd infrastructure/terraform && terraform plan",
     "terraform:apply": "cd infrastructure/terraform && terraform apply",
-    "test:all": "bash scripts/test-runner.sh"
+    "test:all": "bash scripts/test-runner.sh",
+    "docs:validate": "bash scripts/validate-docs.sh"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
