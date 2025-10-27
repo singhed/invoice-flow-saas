@@ -1,283 +1,187 @@
-# Invoice SaaS - Production-Grade Cloud-Native Application
+# Invoice SaaS
 
-[![CI/CD](https://github.com/your-org/invoice-saas/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/your-org/invoice-saas/actions)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![AWS](https://img.shields.io/badge/AWS-Infrastructure-orange)](https://aws.amazon.com)
-[![Kubernetes](https://img.shields.io/badge/Kubernetes-EKS-blue)](https://kubernetes.io)
+Production-grade invoice management platform built on cloud-native microservices architecture.
 
-A production-ready invoice management SaaS application built with microservices architecture on AWS infrastructure. Features include automated invoice generation, PDF creation, payment processing, email notifications, and comprehensive monitoring.
+## Overview
 
-## Features
+**Core Capabilities**
+- Invoice lifecycle management
+- Automated PDF generation with S3 storage
+- Payment processing via Stripe
+- Multi-channel notifications
+- JWT authentication with role-based access
+- Real-time status updates
+- Advanced search and analytics
 
-### Core Functionality
-- Invoice Management: Create, read, update, delete invoices
-- PDF Generation: Automatic PDF creation and S3 storage
-- Payment Processing: Stripe integration with webhook handling
-- Email Notifications: AWS SES emails with Shopify order context
-- User Authentication: JWT-based auth with RBAC
-- Real-time Updates: WebSocket support for status changes
-- Search & Filtering: Advanced invoice search capabilities
-- Dashboard Analytics: Invoice metrics and reporting
-
-### Infrastructure
-- Multi-AZ High Availability: 99.9% uptime SLA
-- Auto-scaling: Horizontal pod autoscaling (HPA) on all services
-- Load Balancing: AWS Application Load Balancer
-- Caching: Redis cluster for performance optimization
-- Message Queuing: SQS/SNS for async processing
-- Monitoring: CloudWatch dashboards and alarms
-- Security: VPC isolation, encryption at rest and in transit
-- CI/CD: Automated testing and deployment
-
-## Table of Contents
-
-- [Architecture](#architecture)
-- [Technology Stack](#technology-stack)
-- [Prerequisites](#prerequisites)
-- [Quick Start](#quick-start)
-- [Project Structure](#project-structure)
-- [Development](#development)
-- [Deployment](#deployment)
-- [Testing](#testing)
-- [API Documentation](#api-documentation)
-- [License](#license)
+**Infrastructure**
+- Multi-AZ deployment with 99.9% uptime
+- Auto-scaling microservices on Kubernetes
+- Redis caching and message queuing
+- Comprehensive monitoring and observability
+- End-to-end encryption and VPC isolation
 
 ## Architecture
 
-The application follows a microservices architecture deployed on AWS EKS:
-
 ```
-Frontend (Render) → ALB → API Gateway → Microservices (EKS)
-                                        ├── Invoice Service
-                                        ├── Payment Service  
-                                        ├── User Service
-                                        ├── Notification Service
-                                        └── Worker Service
-                                             ↓
-                                    ┌────────────────┐
-                                    │ Data Layer     │
-                                    ├────────────────┤
-                                    │ PostgreSQL RDS │
-                                    │ Redis Cache    │
-                                    │ S3 Storage     │
-                                    │ SQS Queues     │
-                                    └────────────────┘
+Frontend → ALB → API Gateway → Microservices (EKS)
+                              ├─ Invoice Service
+                              ├─ Payment Service  
+                              ├─ User Service
+                              ├─ Notification Service
+                              └─ Worker Service
+                                     ↓
+                              ┌──────────────┐
+                              │ PostgreSQL   │
+                              │ Redis        │
+                              │ S3           │
+                              │ SQS          │
+                              └──────────────┘
 ```
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture documentation.
+Detailed architecture documentation available in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Technology Stack
 
-### Backend
-- Runtime: Node.js 20 LTS
-- Language: TypeScript
-- Framework: Express.js
-- ORM: Prisma
-- Validation: Joi
-- Authentication: JWT
+**Backend**
+- Node.js 20, TypeScript, Express.js
+- Prisma ORM, Joi validation
+- JWT authentication
 
-### Frontend
-- Framework: React 18
-- Language: TypeScript
-- Styling: Tailwind CSS
-- State: React Context
-- Testing: React Testing Library, Playwright
+**Frontend**
+- React 18, TypeScript, Tailwind CSS
+- React Testing Library, Playwright
 
-### Infrastructure
-- Cloud: AWS (VPC, EKS, RDS, ElastiCache, S3, SQS, SNS)
-- Container Orchestration: Kubernetes (EKS)
-- IaC: Terraform
-- CI/CD: GitHub Actions
+**Infrastructure**
+- AWS EKS, RDS, ElastiCache, S3, SQS
+- Terraform, GitHub Actions
+- Docker, Kubernetes, Helm
 
-### Databases
-- Primary: PostgreSQL 15 (Multi-AZ)
-- Cache: Redis 7 (Cluster Mode)
-- Storage: S3 (with lifecycle policies)
+**Data**
+- PostgreSQL 15 (Multi-AZ)
+- Redis 7 (Cluster)
+- S3 with lifecycle policies
 
-### DevOps
-- Containerization: Docker
-- Orchestration: Kubernetes + Helm
-- Monitoring: CloudWatch, Prometheus
-- Logging: CloudWatch Logs
-- Tracing: AWS X-Ray
+**Observability**
+- CloudWatch, Prometheus, X-Ray
 
-## Prerequisites
+## Getting Started
 
-- Node.js 20+ and pnpm 8+
-- Docker 24+
-- AWS CLI v2
-- Terraform 1.5+
-- kubectl 1.28+
-- Git
+**Requirements**
+- Node.js 20+, pnpm 8+, Docker 24+
+- AWS CLI v2, Terraform 1.5+, kubectl 1.28+
 
-## Quick Start
-
-### 1. Clone the Repository
+**Setup**
 
 ```bash
+# Clone and install
 git clone https://github.com/your-org/invoice-saas.git
 cd invoice-saas
-```
-
-### 2. Install Dependencies
-
-```bash
 pnpm install
-```
 
-### 3. Set Up Environment Variables
-
-```bash
+# Configure environment
 cp .env.example .env
-# Edit .env with your configuration
-```
 
-### 4. Local Development
-
-```bash
-# Start all services locally
+# Start local development
 pnpm dev
 
-# Start individual services
-pnpm --filter @invoice-saas/api-gateway dev
-pnpm --filter @invoice-saas/invoice-service dev
-```
-
-### 5. Run Tests
-
-```bash
-# Run all tests
+# Run tests
 pnpm run test:all
-
-# Or run specific test suites
-pnpm run test:unit
-pnpm run test:integration
-pnpm run test:e2e
 ```
 
-### 6. Deploy to AWS
+**Deploy to AWS**
 
 ```bash
-# Initialize infrastructure
+# Provision infrastructure
 cd infrastructure/terraform
-terraform init
-terraform plan -var-file="environments/prod/terraform.tfvars"
-terraform apply
+terraform init && terraform apply
 
-# Deploy to Kubernetes
+# Deploy services
 kubectl apply -k infrastructure/kubernetes/overlays/prod
 ```
 
-See [INSTALLATION.md](INSTALLATION.md) for detailed setup instructions.
+See [QUICK_START.md](QUICK_START.md) for detailed instructions.
 
 ## Project Structure
 
 ```
 .
 ├── infrastructure/
-│   ├── terraform/               # Terraform IaC
-│   │   ├── modules/            # Reusable modules (VPC, EKS, RDS, etc.)
-│   │   ├── environments/       # Environment-specific configs
-│   │   └── main.tf
-│   └── kubernetes/             # Kubernetes manifests
-│       ├── base/               # Base configurations
-│       └── overlays/           # Environment overlays
-├── services/                   # Microservices
-│   ├── api-gateway/           # API Gateway service
-│   ├── invoice-service/       # Invoice management
-│   ├── payment-service/       # Payment processing
-│   ├── notification-service/  # Email/SMS notifications
-│   ├── user-service/          # Authentication & users
-│   └── worker-service/        # Background jobs
+│   ├── terraform/          # IaC modules and environments
+│   └── kubernetes/         # K8s manifests and overlays
+├── services/
+│   ├── api-gateway/
+│   ├── invoice-service/
+│   ├── payment-service/
+│   ├── notification-service/
+│   ├── user-service/
+│   └── worker-service/
 ├── apps/
-│   ├── web/                   # React frontend application
-│   └── api/                   # Unified API layer
+│   ├── web/                # React frontend
+│   └── api/                # API layer
 ├── packages/
-│   └── shared/                # Shared utilities
-├── scripts/                    # Automation scripts
-├── docs/                       # Documentation
-│   ├── ARCHITECTURE.md        # System architecture
-│   ├── DEPLOYMENT_GUIDE.md    # Deployment instructions
-│   ├── COST_ANALYSIS.md       # Cost breakdown
-│   └── DATABASE.md            # Database documentation
-├── .github/
-│   └── workflows/             # CI/CD pipelines
-├── package.json               # Root package.json
-└── README.md                  # This file
+│   └── shared/             # Shared utilities
+├── docs/                   # Technical documentation
+└── scripts/                # Automation
 ```
 
 ## Development
 
-### Local Development Setup
+**Local Setup**
 
-1. Start Infrastructure Services:
 ```bash
+# Start infrastructure
 docker-compose up -d postgres redis localstack
-```
 
-2. Run Database Migrations:
-```bash
+# Run migrations
 pnpm --filter @invoice-saas/invoice-service prisma:migrate
-```
 
-3. Start Development Servers:
-```bash
-# All services
+# Start services
 pnpm dev
 ```
 
-### Code Quality
+**Code Quality**
 
 ```bash
-# Linting
 pnpm run lint
-
-# Type checking
 pnpm run typecheck
-
-# Formatting
 pnpm run format
 ```
 
-### Debugging
+**Debugging**
 
 ```bash
-# Enable debug logs
+# Debug mode
 export LOG_LEVEL=debug
 pnpm dev
 
-# Debug specific service
+# Inspect specific service
 NODE_OPTIONS='--inspect' pnpm --filter @invoice-saas/invoice-service dev
 ```
 
 ## Deployment
 
-### Production Deployment
+**Production**
 
 ```bash
-# 1. Deploy infrastructure
+# Deploy infrastructure
 cd infrastructure/terraform
 terraform apply -var-file="environments/prod/terraform.tfvars"
 
-# 2. Build and push Docker images
-pnpm run docker:build
-pnpm run docker:push
-
-# 3. Deploy to Kubernetes
+# Build and deploy
+pnpm run docker:build && pnpm run docker:push
 kubectl apply -k infrastructure/kubernetes/overlays/prod
 
-# 4. Verify deployment
+# Verify
 kubectl get pods -n invoice-saas
-kubectl get svc -n invoice-saas
 ```
 
-### Rollback
+**Rollback**
 
 ```bash
 kubectl rollout undo deployment/invoice-service -n invoice-saas
 ```
 
-### Health Checks
+**Health Checks**
 
 ```bash
 kubectl exec -n invoice-saas deployment/api-gateway -- curl http://localhost:3000/health
@@ -285,113 +189,66 @@ kubectl exec -n invoice-saas deployment/api-gateway -- curl http://localhost:300
 
 ## Testing
 
-### Automated Testing
+**Automated Suite**
 
 ```bash
-# Run complete test suite
 bash scripts/test-runner.sh
 ```
 
-The test runner automatically:
-1. Validates Terraform configurations
-2. Runs unit tests for all services
-3. Executes integration tests
-4. Validates Kubernetes manifests
-5. Builds Docker images
-6. Runs E2E tests
-7. Retries failed tests up to 3 times
-8. Generates detailed failure reports
+Validates infrastructure, runs unit/integration/E2E tests, builds images, and generates reports.
 
-### Manual Testing
+**Manual Testing**
 
 ```bash
-# Unit tests
 pnpm run test:unit
-
-# Integration tests (requires PostgreSQL and Redis)
 pnpm run test:integration
-
-# E2E tests
 pnpm run test:e2e
-
-# Test coverage
 pnpm run test:coverage
 ```
 
-### Load Testing
+**Load Testing**
 
 ```bash
-# Using k6
 k6 run scripts/load-test.js
-
-# Or using Artillery
-artillery run scripts/load-test.yml
 ```
 
-## API Documentation
+## API
 
-API documentation is available at `/api-docs` when running the API Gateway.
+Interactive documentation available at `/api-docs` when running locally.
 
-See [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for detailed API reference.
+Full reference: [API_DOCUMENTATION.md](API_DOCUMENTATION.md)
 
-### Authentication
+**Authentication**
 
-Endpoints:
-- POST /api/auth/register - Create a new user and receive a JWT
-- POST /api/auth/login - Authenticate and receive a JWT
-- POST /api/auth/refresh - Rotate refresh token and return new access token
-- POST /api/auth/logout - Revoke refresh token
-- GET /api/auth/me - Get authenticated user profile
+JWT-based authentication with 15-minute access tokens and 7-day refresh tokens.
 
-Tokens:
-- Access: JWT (HS256) signed with JWT_SECRET, expires in 15 minutes
-- Refresh: JWT (HS256) signed with REFRESH_TOKEN_SECRET, stored as HttpOnly cookie, expires in 7 days
-
-Rate Limits:
-- Global: 100 requests / 15 minutes per IP
-- Auth endpoints: 10 requests / 15 minutes per IP + email
-
-### Security
-
-The platform implements multiple security layers:
-- CSRF Protection with double-submit tokens
-- Input Validation & Sanitization using Joi schemas
-- XSS mitigation
-- HTTP Parameter Pollution (HPP) blocking
-- Secure headers via Helmet (HSTS, X-Content-Type-Options, etc.)
-- CORS restricted to ALLOWED_ORIGINS
-- Rate limiting on all endpoints
-
-### Sample API Calls
-
-#### Register User
 ```bash
-curl -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "user@example.com",
-    "password": "SecurePassword123!"
-  }'
+POST /api/auth/register
+POST /api/auth/login
+POST /api/auth/refresh
+POST /api/auth/logout
+GET  /api/auth/me
 ```
 
-#### Create Invoice
+**Security**
+
+CSRF protection, input validation, XSS mitigation, secure headers, CORS restrictions, and rate limiting.
+
+**Rate Limits**
+- Global: 100 requests per 15 minutes
+- Auth: 10 requests per 15 minutes
+
+**Example Request**
+
 ```bash
 curl -X POST http://localhost:3000/api/invoices \
+  -H "Authorization: Bearer TOKEN" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{
     "clientName": "Acme Corp",
-    "clientEmail": "billing@acme.com",
     "amount": 1000.00,
     "currency": "USD",
-    "dueDate": "2024-12-31",
-    "items": [
-      {
-        "description": "Consulting Services",
-        "quantity": 10,
-        "unitPrice": 100.00
-      }
-    ]
+    "dueDate": "2024-12-31"
   }'
 ```
 

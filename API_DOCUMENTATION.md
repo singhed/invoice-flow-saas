@@ -1,25 +1,22 @@
-# API Documentation
+# API Reference
 
-## Base URL
-
-```
-http://localhost:3000/api
-```
+Base URL: `http://localhost:3000/api`
 
 ## Authentication
 
-Most endpoints require authentication using JWT Bearer tokens.
+Endpoints require JWT Bearer tokens in the Authorization header.
 
-```bash
+```
 Authorization: Bearer <access_token>
 ```
 
-## Authentication Endpoints
+## Auth
 
 ### POST /auth/register
-Register a new user account.
 
-**Request:**
+Create new user account.
+
+**Request**
 ```json
 {
   "email": "user@example.com",
@@ -28,7 +25,7 @@ Register a new user account.
 }
 ```
 
-**Response:** 201 Created
+**Response** `201`
 ```json
 {
   "user": {
@@ -41,9 +38,10 @@ Register a new user account.
 ```
 
 ### POST /auth/login
-Authenticate and receive access token.
 
-**Request:**
+Authenticate user.
+
+**Request**
 ```json
 {
   "email": "user@example.com",
@@ -51,7 +49,7 @@ Authenticate and receive access token.
 }
 ```
 
-**Response:** 200 OK
+**Response** `200`
 ```json
 {
   "token": "eyJhbGc...",
@@ -61,16 +59,17 @@ Authenticate and receive access token.
 ```
 
 ### POST /auth/refresh
-Refresh access token using refresh token.
 
-**Request:**
+Refresh access token.
+
+**Request**
 ```json
 {
   "refreshToken": "eyJhbGc..."
 }
 ```
 
-**Response:** 200 OK
+**Response** `200`
 ```json
 {
   "token": "eyJhbGc...",
@@ -79,14 +78,16 @@ Refresh access token using refresh token.
 ```
 
 ### POST /auth/logout
-Logout and invalidate refresh token.
 
-**Response:** 204 No Content
+Invalidate refresh token.
+
+**Response** `204`
 
 ### GET /auth/me
-Get current user profile.
 
-**Response:** 200 OK
+Get current user.
+
+**Response** `200`
 ```json
 {
   "id": "uuid",
@@ -96,12 +97,13 @@ Get current user profile.
 }
 ```
 
-## Invoice Endpoints
+## Invoices
 
 ### POST /invoices
-Create a new invoice.
 
-**Request:**
+Create invoice.
+
+**Request**
 ```json
 {
   "clientName": "Acme Corp",
@@ -109,7 +111,6 @@ Create a new invoice.
   "amount": 1000.00,
   "currency": "USD",
   "dueDate": "2024-12-31",
-  "description": "Consulting services",
   "items": [
     {
       "description": "Consulting Services",
@@ -120,45 +121,32 @@ Create a new invoice.
 }
 ```
 
-**Response:** 201 Created
+**Response** `201`
 ```json
 {
   "id": "uuid",
   "invoiceNumber": "INV-2024-001",
   "clientName": "Acme Corp",
-  "clientEmail": "billing@acme.com",
   "amount": 1000.00,
-  "currency": "USD",
   "status": "draft",
-  "dueDate": "2024-12-31",
-  "createdAt": "2024-01-15T10:00:00Z",
   "pdfUrl": "https://s3.amazonaws.com/..."
 }
 ```
 
 ### GET /invoices
-List all invoices.
 
-**Query Parameters:**
-- `page` (optional): Page number (default: 1)
-- `limit` (optional): Items per page (default: 20, max: 100)
-- `status` (optional): Filter by status (draft, sent, paid, overdue, cancelled)
-- `search` (optional): Search by client name or invoice number
+List invoices.
 
-**Response:** 200 OK
+**Parameters**
+- `page` Page number (default: 1)
+- `limit` Items per page (default: 20, max: 100)
+- `status` Filter by status
+- `search` Search by client or invoice number
+
+**Response** `200`
 ```json
 {
-  "invoices": [
-    {
-      "id": "uuid",
-      "invoiceNumber": "INV-2024-001",
-      "clientName": "Acme Corp",
-      "amount": 1000.00,
-      "status": "draft",
-      "dueDate": "2024-12-31",
-      "createdAt": "2024-01-15T10:00:00Z"
-    }
-  ],
+  "invoices": [...],
   "pagination": {
     "total": 50,
     "page": 1,
@@ -169,37 +157,26 @@ List all invoices.
 ```
 
 ### GET /invoices/:id
-Get a specific invoice.
 
-**Response:** 200 OK
+Get invoice details.
+
+**Response** `200`
 ```json
 {
   "id": "uuid",
   "invoiceNumber": "INV-2024-001",
   "clientName": "Acme Corp",
-  "clientEmail": "billing@acme.com",
   "amount": 1000.00,
-  "currency": "USD",
-  "status": "draft",
-  "dueDate": "2024-12-31",
-  "items": [
-    {
-      "description": "Consulting Services",
-      "quantity": 10,
-      "unitPrice": 100.00,
-      "total": 1000.00
-    }
-  ],
-  "createdAt": "2024-01-15T10:00:00Z",
-  "updatedAt": "2024-01-15T10:00:00Z",
+  "items": [...],
   "pdfUrl": "https://s3.amazonaws.com/..."
 }
 ```
 
 ### PUT /invoices/:id
-Update an invoice.
 
-**Request:**
+Update invoice.
+
+**Request**
 ```json
 {
   "clientName": "Acme Corporation",
@@ -208,46 +185,47 @@ Update an invoice.
 }
 ```
 
-**Response:** 200 OK
-Returns updated invoice object.
+**Response** `200`
 
 ### DELETE /invoices/:id
-Delete an invoice.
 
-**Response:** 204 No Content
+Delete invoice.
+
+**Response** `204`
 
 ### POST /invoices/:id/send
+
 Send invoice via email.
 
-**Request:**
+**Request**
 ```json
 {
   "recipientEmail": "billing@acme.com",
-  "message": "Please find attached invoice for services rendered."
+  "message": "Please find attached invoice."
 }
 ```
 
-**Response:** 200 OK
+**Response** `200`
 ```json
 {
   "status": "sent",
-  "sentAt": "2024-01-15T10:00:00Z",
-  "recipientEmail": "billing@acme.com"
+  "sentAt": "2024-01-15T10:00:00Z"
 }
 ```
 
 ### GET /invoices/:id/pdf
-Download invoice PDF.
 
-**Response:** 200 OK
-Returns PDF file with appropriate Content-Type header.
+Download PDF.
 
-## Payment Endpoints
+**Response** `200` (application/pdf)
+
+## Payments
 
 ### POST /payments
-Record a payment.
 
-**Request:**
+Record payment.
+
+**Request**
 ```json
 {
   "invoiceId": "uuid",
@@ -257,54 +235,44 @@ Record a payment.
 }
 ```
 
-**Response:** 201 Created
+**Response** `201`
 ```json
 {
   "id": "uuid",
-  "invoiceId": "uuid",
   "amount": 1000.00,
-  "paymentMethod": "credit_card",
-  "transactionId": "ch_1234567890",
   "status": "completed",
   "createdAt": "2024-01-15T10:00:00Z"
 }
 ```
 
 ### GET /payments
-List all payments.
 
-**Query Parameters:**
-- `page` (optional): Page number (default: 1)
-- `limit` (optional): Items per page (default: 20)
-- `invoiceId` (optional): Filter by invoice ID
+List payments.
 
-**Response:** 200 OK
+**Parameters**
+- `page` Page number
+- `limit` Items per page
+- `invoiceId` Filter by invoice
+
+**Response** `200`
 ```json
 {
-  "payments": [
-    {
-      "id": "uuid",
-      "invoiceId": "uuid",
-      "amount": 1000.00,
-      "status": "completed",
-      "createdAt": "2024-01-15T10:00:00Z"
-    }
-  ],
+  "payments": [...],
   "pagination": {
     "total": 25,
     "page": 1,
-    "limit": 20,
     "pages": 2
   }
 }
 ```
 
-## Analytics Endpoints
+## Analytics
 
 ### GET /analytics/dashboard
-Get dashboard metrics.
 
-**Response:** 200 OK
+Dashboard metrics.
+
+**Response** `200`
 ```json
 {
   "totalRevenue": 50000.00,
@@ -313,35 +281,27 @@ Get dashboard metrics.
   "pendingAmount": 15000.00,
   "overdueAmount": 5000.00,
   "revenueByMonth": [
-    { "month": "2024-01", "revenue": 10000.00 },
-    { "month": "2024-02", "revenue": 12000.00 }
+    { "month": "2024-01", "revenue": 10000.00 }
   ]
 }
 ```
 
-## Error Responses
+## Errors
 
-All endpoints may return the following error responses:
+Standard HTTP status codes with structured error responses.
 
-### 400 Bad Request
-Invalid request parameters or validation errors.
-
+**400 Bad Request**
 ```json
 {
   "error": "Bad Request",
   "message": "Validation failed",
   "details": [
-    {
-      "field": "email",
-      "message": "Invalid email format"
-    }
+    { "field": "email", "message": "Invalid format" }
   ]
 }
 ```
 
-### 401 Unauthorized
-Missing or invalid authentication token.
-
+**401 Unauthorized**
 ```json
 {
   "error": "Unauthorized",
@@ -349,64 +309,56 @@ Missing or invalid authentication token.
 }
 ```
 
-### 403 Forbidden
-Insufficient permissions.
-
+**403 Forbidden**
 ```json
 {
   "error": "Forbidden",
-  "message": "You don't have permission to access this resource"
+  "message": "Insufficient permissions"
 }
 ```
 
-### 404 Not Found
-Resource not found.
-
+**404 Not Found**
 ```json
 {
   "error": "Not Found",
-  "message": "Invoice not found"
+  "message": "Resource not found"
 }
 ```
 
-### 429 Too Many Requests
-Rate limit exceeded.
-
+**429 Too Many Requests**
 ```json
 {
   "error": "Too Many Requests",
-  "message": "Rate limit exceeded. Please try again later.",
+  "message": "Rate limit exceeded",
   "retryAfter": 60
 }
 ```
 
-### 500 Internal Server Error
-Server error.
-
+**500 Internal Server Error**
 ```json
 {
   "error": "Internal Server Error",
-  "message": "An unexpected error occurred"
+  "message": "Unexpected error occurred"
 }
 ```
 
-## Rate Limiting
+## Rate Limits
 
-- Global: 100 requests per 15 minutes per IP
-- Auth endpoints: 10 requests per 15 minutes per IP + email combination
+- Global: 100 requests per 15 minutes
+- Auth: 10 requests per 15 minutes
 
-Rate limit headers are included in all responses:
-- `X-RateLimit-Limit`: Maximum requests allowed
-- `X-RateLimit-Remaining`: Remaining requests
-- `X-RateLimit-Reset`: Timestamp when limit resets
+**Headers**
+- `X-RateLimit-Limit` Maximum allowed
+- `X-RateLimit-Remaining` Requests remaining
+- `X-RateLimit-Reset` Reset timestamp
 
 ## Pagination
 
-List endpoints support pagination with the following parameters:
-- `page`: Page number (starts at 1)
-- `limit`: Items per page (max 100)
+**Parameters**
+- `page` Page number (starts at 1)
+- `limit` Items per page (max 100)
 
-Paginated responses include:
+**Response**
 ```json
 {
   "data": [...],
@@ -418,9 +370,3 @@ Paginated responses include:
   }
 }
 ```
-
-## API Versioning
-
-The API is versioned via the URL path. Current version is v1.
-
-Future versions will be accessible at `/api/v2`, etc.
