@@ -1,16 +1,58 @@
-SYSTEM OVERVIEW
+# System Overview
 
-This repository defines a Google-scale, cloud-native, multi-region platform engineered for extreme reliability, elasticity, and velocity of change. The system embraces a modular monorepo with independently deployable services, strong contracts, and platform-level primitives for security, observability, and automation. At a high level:
+Cloud-native, multi-region platform built for reliability, scalability, and operational velocity.
 
-- Clients: Web (Next.js), Admin Console (Next.js), Public APIs (REST/GraphQL/gRPC), and Internal tooling.
-- Edge: CDN + WAF + API Gateway for global routing, TLS termination, authn/z, quotas, and request shaping.
-- Services: Independently-scalable NestJS microservices: Auth, User, Invoice, Search, Notification, Analytics, Storage, plus API Gateway as the ingress/control plane for public APIs.
-- Data: PostgreSQL (OLTP; sharded/partitioned), Redis (caching + rate limits + queues where needed), Elasticsearch (search/indexing), S3/GCS (object storage), RabbitMQ (asynchronous messaging and fanout), Time-series/OLAP (BigQuery/Snowflake or ClickHouse optional for analytics-at-scale).
-- Platform: Kubernetes (EKS/GKE) for orchestration, HashiCorp Terraform for IaC, GitHub Actions for CI/CD, service mesh (Istio/Linkerd) for mTLS and traffic policy, OPA/Gatekeeper for policy, Prometheus/Grafana for metrics, OpenTelemetry for tracing, Loki/CloudWatch/Cloud Logging for logs.
-- Reliability: Multi-AZ active-active, optional multi-region with RPO ~0 and RTO minutes via logical replication, stateless services with graceful degradation, bulkheading, circuit breakers, and backpressure.
-- Security: Zero-trust, short-lived credentials (OIDC workload identity), secrets managers, envelope encryption (KMS), fine-grained RBAC/ABAC, and strict least privilege.
+## Architecture
 
-ARCHITECTURE DIAGRAM (Mermaid)
+**Client Layer**
+- Web application (Next.js)
+- Admin console (Next.js)
+- Public APIs (REST/GraphQL/gRPC)
+- Internal tooling
+
+**Edge Layer**
+- CDN with WAF
+- API Gateway for routing and TLS termination
+- Authentication and authorization
+- Request quotas and rate limiting
+
+**Service Layer**
+- Independently scalable microservices
+- Auth, User, Invoice, Search, Notification, Analytics, Storage
+- API Gateway as ingress control plane
+
+**Data Layer**
+- PostgreSQL (OLTP, sharded/partitioned)
+- Redis (caching, rate limits, queues)
+- Elasticsearch (search and indexing)
+- S3/GCS (object storage)
+- RabbitMQ (async messaging)
+- BigQuery/Snowflake (analytics)
+
+**Platform**
+- Kubernetes (EKS/GKE) orchestration
+- Terraform infrastructure as code
+- GitHub Actions CI/CD
+- Service mesh (Istio/Linkerd) for mTLS
+- OPA/Gatekeeper for policy enforcement
+- Prometheus/Grafana for metrics
+- OpenTelemetry for tracing
+- CloudWatch/Cloud Logging for logs
+
+**Reliability**
+- Multi-AZ active-active deployment
+- Optional multi-region with RPO near zero
+- Stateless services with graceful degradation
+- Circuit breakers and backpressure handling
+
+**Security**
+- Zero-trust architecture
+- Short-lived credentials (OIDC)
+- Secrets management and KMS encryption
+- Fine-grained RBAC/ABAC
+- Least privilege access
+
+## Architecture Diagram
 
 ```mermaid
 flowchart LR
@@ -81,9 +123,9 @@ flowchart LR
   classDef ghost fill:#eee,stroke:#bbb,color:#444;
 ```
 
-MONOREPO FILE STRUCTURE
+## Repository Structure
 
-This monorepo is organized to minimize coupling, maximize reuse, and enable high-velocity CI/CD. It follows a clear separation of concerns between apps (UIs), services (APIs/backends), shared packages, and infrastructure. The folders listed below exist or should be created as part of this design.
+Organized to minimize coupling, maximize reuse, and enable high-velocity CI/CD. Clear separation between apps, services, shared packages, and infrastructure.
 
 - apps/
   - web/                      Next.js end-user web app
@@ -117,11 +159,11 @@ This monorepo is organized to minimize coupling, maximize reuse, and enable high
 - pnpm-workspace.yaml         Workspace definition
 - docker-compose.yml          Local development stack (DB/Cache/etc.)
 
-SERVICE-BY-SERVICE STRUCTURE
+## Service Structure
 
-Each NestJS service follows the same conventions for consistency, security, and operational excellence.
+Each service follows consistent conventions for reliability and maintainability.
 
-Common layout (example: services/auth-service):
+**Standard Layout** (example: services/auth-service)
 
 - services/auth-service/
   - src/
@@ -150,61 +192,102 @@ Common layout (example: services/auth-service):
   - .env.example              Local environment variables
   - README.md                 Service-specific documentation
 
-Notes per service:
-- api-gateway: Aggregation, routing, BFF patterns, schema validation, rate limiting, request tracing propagation.
-- auth-service: Authentication (passwordless, OAuth2, SSO), authorization (RBAC/ABAC), token minting/rotation, session mgmt.
-- user-service: Profile, preferences, account lifecycle, GDPR tooling (export/delete), audit logging.
-- search-service: Indexing pipeline, analyzers, synonyms, relevance tuning, results caching, suggestions/autocomplete.
-- notification-service: Multi-channel messaging (email/SMS/push/webhooks), retry with DLQs, templates, rate limiting per recipient/provider.
-- analytics-service: Event ingestion, stream processing (optional), attribution, cohorting, funnel metrics, export to OLAP/warehouse.
-- storage-service: Signed URLs, lifecycle policies, tiering, content scanning (antivirus/DLP), metadata.
+**Service Responsibilities**
 
-DEPLOYMENT PIPELINE DESCRIPTION
+- **api-gateway** Aggregation, routing, schema validation, rate limiting, tracing
+- **auth-service** Authentication (OAuth2, SSO), authorization (RBAC/ABAC), token management
+- **user-service** Profile management, account lifecycle, GDPR compliance, audit logging
+- **search-service** Indexing pipeline, relevance tuning, caching, autocomplete
+- **notification-service** Multi-channel messaging, retry logic, templates, rate limiting
+- **analytics-service** Event ingestion, stream processing, metrics, warehouse export
+- **storage-service** Signed URLs, lifecycle policies, content scanning, metadata
 
-- Trunk + Branching: PRs against develop/main, protected branches, required checks.
-- CI (GitHub Actions):
-  - Static checks: ESLint, Prettier, TypeScript typechecks, dependency audit.
-  - Unit/Integration tests: Database (PostgreSQL), Redis, and service stubs using docker compose services/actions.
-  - Contracts: OpenAPI/AsyncAPI/proto checks to prevent breaking changes.
-  - Build: Multi-arch Docker images (linux/amd64, linux/arm64) with SBOM and signatures (cosign/SLSA provenance).
-  - Security: Image scanning (Trivy/Grype), secret scanning, SAST (CodeQL) and IaC scanning (tfsec, Checkov).
-  - Artifact Registry: Push to ECR/GAR with content trust and immutable tags.
-- CD:
-  - Infrastructure: Terraform plan/apply per environment via GitHub Environments and required approvals.
-  - App deploy: ArgoCD/Flux or GitOps Helm releases, or direct kubectl with kustomize overlays (blue/green or canary via service mesh).
-  - Post-deploy: Smoke tests, synthetic probes, and automatic rollback on SLO violations.
-- Observability:
-  - OpenTelemetry traces with baggage propagation, RED/USE metrics, SLOs with alerting in PagerDuty.
-  - Log aggregation with structured logs and correlation IDs.
+## Deployment Pipeline
 
-COMPONENT EXPLANATIONS
+**Branching Strategy**
+- Trunk-based development with PRs against develop/main
+- Protected branches with required checks
 
-- API Gateway:
-  - Responsibilities: TLS termination, routing, schema validation, authn/z delegation to auth-service, quotas/rate limits, A/B flags.
-  - Failure modes: shed load on overload (429), circuit-breaker to unhealthy backends, serve stale from cache.
-- Auth Service:
-  - Implements OAuth2/OIDC, JWT minting (short-lived), refresh token rotation, SSO providers (Google/Microsoft), permissions, and audit trails.
-  - Storage: PostgreSQL (users, sessions, tokens), Redis (sessions/blacklist), optional KMS for key material.
-- User Service:
-  - Manages user profiles, preferences, orgs/teams, invitations, billing association; GDPR endpoints for export/delete.
-- Search Service:
-  - Indexing pipeline with idempotent upserts, analyzers per locale, synonyms, relevance tuning; streaming rebuilds without downtime.
-  - Backfills via bulk scroll APIs; dual-write through outbox pattern for consistency.
-- Notification Service:
-  - Producers consume domain events from RabbitMQ, fanout to channel workers; templates with handlebars/mjml; exponential backoff and DLQs.
-  - Providers: SES/SendGrid (email), Twilio (SMS), FCM/APNs (push), custom webhooks with HMAC signatures.
-- Analytics Service:
-  - Ingests events asynchronously; computes aggregates, funnels, cohorts; exposes APIs/dashboards; exports to warehouse.
-- Storage Service:
-  - Generates signed upload/download URLs, virus/DLP scanning with quarantine, lifecycle policies (IA/Glacier or Nearline/Coldline), cross-region replication.
-- Data tier:
-  - PostgreSQL: partitioning (by time/tenant), read replicas, HA; use logical replication for multi-region; avoid cross-region transactions.
-  - Redis: sharded cluster, TTL-based caches, distributed locks (redlock with caution), rate limits via token bucket.
-  - Elasticsearch: multi-AZ nodes, ILM policies, tiered storage, snapshot/restore; dedicated ingestion nodes.
-  - RabbitMQ: quorum queues, HA policies, consumer prefetch tuning, publisher confirms, idempotent consumers.
-- Platform:
-  - Kubernetes: pod security, resource requests/limits, HPA/VPA, PDBs, topology spread constraints, node autoscaling.
-  - Service Mesh: mTLS, retries/timeouts, traffic shaping for canaries, fault injection for chaos testing.
-  - Security: OPA policies, image allow-list, SBOM validation, secretless (workload identity), KMS envelope encryption.
+**Continuous Integration**
+- Static checks (ESLint, Prettier, TypeScript, dependency audit)
+- Unit and integration tests with PostgreSQL and Redis
+- Contract validation (OpenAPI/AsyncAPI/proto)
+- Multi-arch Docker builds (amd64, arm64) with SBOM
+- Security scanning (Trivy, CodeQL, tfsec, Checkov)
+- Artifact push to ECR/GAR with immutable tags
 
-This documentation is implementation-ready: follow the service layouts, infrastructure modules, and CI/CD suggestions to stand up a production-grade, Google-scale system. For per-service details, see docs/services/*.md.
+**Continuous Deployment**
+- Terraform plan/apply per environment
+- GitOps deployments via ArgoCD/Flux
+- Blue/green or canary releases via service mesh
+- Post-deploy smoke tests and synthetic probes
+- Automatic rollback on SLO violations
+
+**Observability**
+- OpenTelemetry traces with baggage propagation
+- RED/USE metrics with alerting
+- Structured logs with correlation IDs
+- SLO monitoring with PagerDuty integration
+
+## Component Details
+
+**API Gateway**
+- TLS termination, routing, schema validation
+- Authentication delegation, quotas, rate limits
+- Load shedding on overload
+- Circuit breakers for unhealthy backends
+
+**Auth Service**
+- OAuth2/OIDC implementation
+- JWT minting with short-lived tokens
+- Refresh token rotation
+- SSO providers (Google, Microsoft)
+- PostgreSQL for users, Redis for sessions
+- Optional KMS for key material
+
+**User Service**
+- Profile and preference management
+- Organization and team management
+- Invitation and billing workflows
+- GDPR compliance (export/delete)
+
+**Search Service**
+- Indexing pipeline with idempotent upserts
+- Multi-locale analyzers and synonyms
+- Relevance tuning and caching
+- Zero-downtime index rebuilds
+- Outbox pattern for consistency
+
+**Notification Service**
+- Event consumption from RabbitMQ
+- Multi-channel delivery (email, SMS, push, webhooks)
+- Template rendering (Handlebars, MJML)
+- Exponential backoff with DLQs
+- Provider integration (SES, SendGrid, Twilio, FCM, APNs)
+
+**Analytics Service**
+- Asynchronous event ingestion
+- Aggregates, funnels, cohort analysis
+- API and dashboard exposure
+- Data warehouse export
+
+**Storage Service**
+- Signed URL generation
+- Virus and DLP scanning
+- Lifecycle policies (IA/Glacier)
+- Cross-region replication
+
+**Data Tier**
+- PostgreSQL: Partitioning, read replicas, multi-region replication
+- Redis: Sharded cluster, TTL caches, rate limiting
+- Elasticsearch: Multi-AZ, ILM policies, tiered storage
+- RabbitMQ: Quorum queues, HA policies, idempotent consumers
+
+**Platform**
+- Kubernetes: Pod security, HPA/VPA, PDBs, topology spread
+- Service Mesh: mTLS, retries, traffic shaping, fault injection
+- Security: OPA policies, SBOM validation, workload identity, KMS encryption
+
+## Implementation
+
+This documentation provides a production-ready blueprint for building a scalable, reliable system. For service-specific details, see `docs/services/*.md`.
