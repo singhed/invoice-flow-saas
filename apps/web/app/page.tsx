@@ -136,8 +136,13 @@ export default async function HomePage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <Link href="/invoices">
+              <Link href="/ai-invoice">
                 <Button variant="primary" className="w-full">
+                  🤖 Try AI Invoice Generator
+                </Button>
+              </Link>
+              <Link href="/invoices">
+                <Button variant="outline" className="w-full">
                   {t("home.quickstart.view_invoices")}
                 </Button>
               </Link>
@@ -169,6 +174,19 @@ export default async function HomePage() {
               {t("home.features.items.expense_tracking_desc")}
             </p>
           </div>
+          <Link href="/ai-invoice">
+            <div className="rounded-lg border border-border bg-card p-5 shadow hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30">
+                  🤖
+                </span>
+                <h3 className="font-semibold">AI Invoice Generator</h3>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Generate invoices instantly from natural language or upload documents for automatic extraction
+              </p>
+            </div>
+          </Link>
           <div className="rounded-lg border border-border bg-card p-5 shadow">
             <div className="mb-3 flex items-center gap-2">
               <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/15 text-sky-400 ring-1 ring-sky-400/30">
